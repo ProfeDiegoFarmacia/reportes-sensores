@@ -3,99 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paessler PRTG - Simulador Multisensor IoT SENA</title>
+    <title>Paessler PRTG - Simulador Multisensor IoT SENA Pro</title>
     <!-- Chart.js para gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #f3f3f3; color: #333; font-size: 13px; }
 
-        /* Barra Superior PRTG Dark Header */
-        .header { background-color: #333333; color: #fff; padding: 6px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
-        .breadcrumb { display: flex; align-items: center; gap: 5px; color: #ccc; }
+        /* Header Superior PRTG */
+        .header { background-color: #1e293b; color: #fff; padding: 8px 18px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; border-bottom: 2px solid #0284c7; }
+        .breadcrumb { display: flex; align-items: center; gap: 6px; color: #cbd5e1; flex-wrap: wrap; }
         .breadcrumb span { color: #fff; font-weight: bold; }
 
-        /* Badges de Estado PRTG (Top Right) */
+        .system-clock { background: #0f172a; padding: 3px 10px; border-radius: 4px; font-family: monospace; color: #38bdf8; font-weight: bold; border: 1px solid #334155; }
+
+        /* Badges de Estado */
         .prtg-badges { display: flex; align-items: center; gap: 6px; }
-        .badge-item { padding: 2px 8px; border-radius: 3px; font-weight: bold; font-size: 11px; color: #fff; }
-        .badge-log { background: #555; font-weight: normal; }
+        .badge-item { padding: 3px 9px; border-radius: 3px; font-weight: bold; font-size: 11px; color: #fff; }
+        .badge-log { background: #475569; font-weight: normal; }
         .badge-red { background: #ef4444; }
         .badge-yellow { background: #f59e0b; }
         .badge-green { background: #10b981; }
 
-        /* Dropdown Selector de Sensor en el Breadcrumb */
+        /* Animación Parpadeante para Estados Críticos */
+        .pulse-critical { animation: pulseRed 1.2s infinite alternate; }
+        @keyframes pulseRed {
+            from { box-shadow: 0 0 2px #ef4444; opacity: 1; }
+            to { box-shadow: 0 0 12px #ef4444; opacity: 0.8; }
+        }
+
+        /* Selector de Sensor en Breadcrumb */
         .sensor-dropdown-container { position: relative; display: inline-block; }
-        .sensor-select-btn { background: #444; color: #fff; padding: 4px 10px; border-radius: 3px; border: 1px solid #666; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 12px; }
-        .sensor-select-btn:hover { background: #555; }
+        .sensor-select-btn { background: #334155; color: #fff; padding: 5px 12px; border-radius: 4px; border: 1px solid #475569; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 12px; }
+        .sensor-select-btn:hover { background: #475569; }
         
-        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; background-color: #ffffff; min-width: 220px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1000; border-radius: 4px; border: 1px solid #ccc; margin-top: 4px; }
+        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; background-color: #ffffff; min-width: 230px; box-shadow: 0px 8px 20px rgba(0,0,0,0.25); z-index: 1000; border-radius: 4px; border: 1px solid #cbd5e1; margin-top: 4px; }
         .dropdown-menu.show { display: block; }
-        .dropdown-item { padding: 10px 14px; color: #333; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-weight: 500; font-size: 12px; }
+        .dropdown-item { padding: 10px 14px; color: #333; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-weight: 500; font-size: 12px; }
         .dropdown-item:hover { background-color: #f1f5f9; }
-        .dropdown-item.active { background-color: #e0f2fe; font-weight: bold; }
+        .dropdown-item.active { background-color: #e0f2fe; font-weight: bold; color: #0284c7; }
         
         .status-icon { width: 18px; height: 18px; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #fff; }
         .icon-green { background: #10b981; }
         .icon-yellow { background: #f59e0b; }
         .icon-red { background: #ef4444; }
 
-        /* Title Bar & Warning Banner */
-        .sensor-title-bar { background-color: #d97706; color: #fff; padding: 10px 20px; font-size: 17px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: background 0.3s; }
+        /* Barra de Título y Banner de Alerta */
+        .sensor-title-bar { background-color: #d97706; color: #fff; padding: 12px 20px; font-size: 17px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: background 0.3s; }
         .alert-banner { background-color: #f59e0b; color: #fff; padding: 10px 20px; font-size: 13px; font-weight: 600; border-bottom: 1px solid rgba(0,0,0,0.1); transition: background 0.3s; }
 
-        /* Pestañas */
-        .tabs { display: flex; background-color: #e5e5e5; border-bottom: 2px solid #ccc; padding-left: 15px; }
-        .tab { padding: 10px 16px; font-size: 13px; color: #555; cursor: pointer; border-right: 1px solid #ddd; font-weight: 500; user-select: none; }
-        .tab:hover { background-color: #ebebeb; }
-        .tab.active { background-color: #fff; color: #000; font-weight: bold; border-top: 3px solid #0284c7; border-bottom: 2px solid #fff; margin-bottom: -2px; }
+        /* Pestañas PRTG */
+        .tabs { display: flex; background-color: #e2e8f0; border-bottom: 2px solid #cbd5e1; padding-left: 15px; overflow-x: auto; }
+        .tab { padding: 11px 18px; font-size: 13px; color: #475569; cursor: pointer; border-right: 1px solid #cbd5e1; font-weight: 500; user-select: none; white-space: nowrap; }
+        .tab:hover { background-color: #cbd5e1; }
+        .tab.active { background-color: #fff; color: #0f172a; font-weight: bold; border-top: 3px solid #0284c7; border-bottom: 2px solid #fff; margin-bottom: -2px; }
 
-        /* Contenedores de Contenido */
-        .main-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+        /* Contenedor Principal */
+        .main-container { padding: 20px; max-width: 1280px; margin: 0 auto; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Tarjetas y Rejillas */
-        .card { background: #fff; border: 1px solid #ccc; border-radius: 4px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .card h3 { font-size: 14px; color: #444; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        /* Tarjetas */
+        .card { background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .card h3 { font-size: 14px; color: #334155; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
 
-        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; font-size: 12px; }
-        .info-item div { color: #666; font-size: 11px; }
-        .info-item strong { color: #111; font-size: 13px; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; font-size: 12px; }
+        .info-item div { color: #64748b; font-size: 11px; }
+        .info-item strong { color: #0f172a; font-size: 13px; }
 
-        /* Gauge (Manómetro) */
+        /* Manómetro / Gauge CSS */
         .gauge-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 10px; }
         .gauge-container { width: 260px; height: 130px; position: relative; overflow: hidden; }
         .gauge-bg { width: 260px; height: 260px; border-radius: 50%; background: conic-gradient(from 270deg, #3b82f6 0deg 45deg, #10b981 45deg 120deg, #f59e0b 120deg 150deg, #ef4444 150deg 180deg, transparent 180deg); position: absolute; top: 0; left: 0; }
         .gauge-inner { width: 180px; height: 180px; background: #fff; border-radius: 50%; position: absolute; top: 40px; left: 40px; }
-        .needle { width: 4px; height: 100px; background: #222; position: absolute; bottom: 0; left: 128px; transform-origin: bottom center; transform: rotate(-90deg); transition: transform 0.4s ease-out; }
-        .needle-pivot { width: 14px; height: 14px; background: #222; border-radius: 50%; position: absolute; bottom: -7px; left: 123px; }
-        .gauge-reading { font-size: 26px; font-weight: bold; margin-top: 10px; color: #111; }
+        .needle { width: 4px; height: 100px; background: #0f172a; position: absolute; bottom: 0; left: 128px; transform-origin: bottom center; transform: rotate(-90deg); transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .needle-pivot { width: 14px; height: 14px; background: #0f172a; border-radius: 50%; position: absolute; bottom: -7px; left: 123px; }
+        .gauge-reading { font-size: 26px; font-weight: bold; margin-top: 10px; color: #0f172a; }
 
         /* Tablas */
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
         th { background-color: #f8fafc; color: #475569; font-weight: 600; }
         tr:hover { background-color: #f1f5f9; }
 
-        /* Formularios y Botones */
+        /* Formulario y Botones */
         .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; margin-bottom: 4px; font-weight: bold; color: #444; }
-        .form-group input { width: 100%; max-width: 400px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; }
-        .btn { padding: 7px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; background: #0284c7; color: #fff; font-size: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; font-weight: bold; color: #334155; }
+        .form-group input, .form-group select { width: 100%; max-width: 400px; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 4px; }
+        .btn { padding: 7px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; background: #0284c7; color: #fff; font-size: 12px; transition: background 0.2s; }
         .btn:hover { background: #0369a1; }
 
-        /* Panel Instructor Multidispositivo */
-        .instructor-panel { background: #0f172a; color: #fff; padding: 18px; border-radius: 6px; margin-top: 25px; border-left: 6px solid #38bdf8; }
-        .instructor-panel h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+        /* Panel Instructor y Macros */
+        .instructor-panel { background: #0f172a; color: #fff; padding: 20px; border-radius: 8px; margin-top: 25px; border-left: 6px solid #38bdf8; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .instructor-panel h4 { color: #38bdf8; margin-bottom: 6px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .macro-section { background: #1e293b; padding: 12px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #334155; }
+        .macro-section h5 { color: #94a3b8; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .macro-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-macro { padding: 6px 12px; border: 1px solid #475569; border-radius: 4px; font-weight: bold; cursor: pointer; color: #fff; font-size: 11px; background: #334155; transition: all 0.2s; }
+        .btn-macro:hover { background: #475569; border-color: #94a3b8; }
+        .btn-macro.danger { background: #7f1d1d; border-color: #ef4444; }
+        .btn-macro.danger:hover { background: #991b1b; }
+        .btn-macro.success { background: #064e3b; border-color: #10b981; }
+        .btn-macro.success:hover { background: #047857; }
+
         .sensor-control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 10px; }
         .sensor-card-ctrl { background: #1e293b; padding: 12px; border-radius: 6px; border: 1px solid #334155; }
         .sensor-card-ctrl h5 { font-size: 13px; color: #f8fafc; margin-bottom: 6px; display: flex; justify-content: space-between; }
         .btn-sim { padding: 5px 8px; margin-right: 4px; margin-top: 5px; border: none; border-radius: 3px; font-weight: bold; cursor: pointer; color: #fff; font-size: 11px; }
+
+        /* Contenedor Toast / Notificaciones SMS */
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: #0f172a; color: #fff; padding: 12px 16px; border-radius: 6px; border-left: 5px solid #0284c7; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 12px; min-width: 280px; max-width: 360px; animation: slideIn 0.3s ease-out; }
+        .toast-title { font-weight: bold; color: #38bdf8; margin-bottom: 3px; display: flex; justify-content: space-between; }
+        .toast.danger { border-left-color: #ef4444; }
+        .toast.danger .toast-title { color: #fca5a5; }
+        .toast.warning { border-left-color: #f59e0b; }
+        .toast.warning .toast-title { color: #fde047; }
+
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <!-- Header Superior PRTG -->
+    <!-- Header Superior PRTG con Reloj del Sistema -->
     <div class="header">
         <div class="breadcrumb">
             Dispositivos > Sonda local > IOT > CLIENTES SENA > FARMACIA (SENA) > FARMACIA > 
@@ -121,19 +152,22 @@
             </div>
         </div>
 
-        <!-- Badges de Estado Globales -->
-        <div class="prtg-badges">
-            <span class="badge-item badge-log">Nuevas entradas de log: 17</span>
-            <span class="badge-item badge-red" id="globalBadgeRed">! 1</span>
-            <span class="badge-item badge-yellow" id="globalBadgeYellow">W 1</span>
-            <span class="badge-item badge-green" id="globalBadgeGreen">✓ 2</span>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div class="system-clock" id="liveClock">00/00/0000 00:00:00</div>
+            <!-- Badges de Estado Globale -->
+            <div class="prtg-badges">
+                <span class="badge-item badge-log">Logs: <span id="logCount">0</span></span>
+                <span class="badge-item badge-red" id="globalBadgeRed">! 0</span>
+                <span class="badge-item badge-yellow" id="globalBadgeYellow">W 0</span>
+                <span class="badge-item badge-green" id="globalBadgeGreen">✓ 0</span>
+            </div>
         </div>
     </div>
 
     <!-- Title Bar del Sensor -->
     <div class="sensor-title-bar" id="titleBar">
         <span><span id="titleIcon">W</span> Sensor <span id="titleSensorName">TEMP AMBIENTE</span></span>
-        <span style="font-size:12px; font-weight:normal;">Estado: <b id="statusBadge">ADVERTENCIA</b></span>
+        <span style="font-size:12px; font-weight:normal;">Estado actual: <b id="statusBadge">ADVERTENCIA</b></span>
     </div>
 
     <!-- Alert Banner -->
@@ -149,7 +183,7 @@
         <div class="tab" onclick="switchTab('tab-10d', this)">10 días</div>
         <div class="tab" onclick="switchTab('tab-365d', this)">365 días</div>
         <div class="tab" onclick="switchTab('tab-historico', this)">Datos históricos</div>
-        <div class="tab" onclick="switchTab('tab-log', this)">Log</div>
+        <div class="tab" onclick="switchTab('tab-log', this)">Log Auditoría</div>
         <div class="tab" onclick="switchTab('tab-config', this)">Configuración</div>
     </div>
 
@@ -158,14 +192,14 @@
         <!-- 1. PESTAÑA RESUMEN -->
         <div id="tab-resumen" class="tab-content active">
             <div class="info-grid card">
-                <div class="info-item"><div>Último escaneo:</div><strong><span id="scanTimer">83</span> s</strong></div>
-                <div class="info-item"><div>Último OK:</div><strong><span id="lastOkTime">83</span> s</strong></div>
+                <div class="info-item"><div>Último escaneo:</div><strong><span id="scanTimer">3</span> s</strong></div>
+                <div class="info-item"><div>Último OK:</div><strong><span id="lastOkTime">12</span> s</strong></div>
                 <div class="info-item"><div>Último fallo:</div><strong><span id="lastFailTime">72 d</span></strong></div>
-                <div class="info-item"><div>Tiempo de inactividad:</div><strong>0.1362%</strong></div>
+                <div class="info-item"><div>Tiempo inactividad:</div><strong>0.012%</strong></div>
                 <div class="info-item"><div>Cobertura:</div><strong>100%</strong></div>
-                <div class="info-item"><div>Intervalo:</div><strong>60 s</strong></div>
+                <div class="info-item"><div>Intervalo escaneo:</div><strong>3 s (Simulado)</strong></div>
                 <div class="info-item"><div>ID del Sensor:</div><strong><span id="sensorId">#6725</span></strong></div>
-                <div class="info-item"><div>Tipo de Sensor:</div><strong>REST (personalizado) v2</strong></div>
+                <div class="info-item"><div>Tipo de Sensor:</div><strong>REST Custom SENA IoT v2</strong></div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px;">
@@ -173,7 +207,7 @@
                     <h3><span id="gaugeTitle">Ambiente</span></h3>
                     <div class="gauge-wrapper">
                         <div class="gauge-container">
-                            <div class="gauge-bg" id="gaugeBg"></div>
+                            <div class="gauge-bg"></div>
                             <div class="gauge-inner"></div>
                             <div class="needle" id="needle"></div>
                             <div class="needle-pivot"></div>
@@ -203,7 +237,7 @@
         <!-- 2. DATOS EN VIVO -->
         <div id="tab-vivo" class="tab-content">
             <div class="card">
-                <h3>Transmisión en Tiempo Real - <span class="active-sensor-name">TEMP AMBIENTE</span></h3>
+                <h3>Transmisión en Tiempo Real con Autofluctuación - <span class="active-sensor-name">TEMP AMBIENTE</span></h3>
                 <canvas id="chartLive" style="max-height: 320px;"></canvas>
             </div>
         </div>
@@ -250,7 +284,18 @@
         <!-- 7. LOG -->
         <div id="tab-log" class="tab-content">
             <div class="card">
-                <h3>Auditoría Completa de Logs del Sistema PRTG</h3>
+                <h3>
+                    Auditoría Completa de Logs del Sistema
+                    <div style="float:right; display:flex; gap:8px; align-items:center;">
+                        <label style="font-size:12px; font-weight:normal;">Filtrar:</label>
+                        <select id="logFilter" onchange="renderLogs()" style="padding:3px 8px; font-size:12px;">
+                            <option value="ALL">Todos los Eventos</option>
+                            <option value="CRITICAL">Solo Críticos (!)</option>
+                            <option value="WARNING">Solo Advertencias (W)</option>
+                            <option value="OK">Solo Operativos (✓)</option>
+                        </select>
+                    </div>
+                </h3>
                 <table>
                     <thead>
                         <tr><th>Marca de Tiempo</th><th>Sensor</th><th>Tipo</th><th>Descripción del Evento</th></tr>
@@ -284,16 +329,33 @@
 
         <!-- CONSOLA MULTISENSOR DEL INSTRUCTOR -->
         <div class="instructor-panel">
-            <h4>🕹️ Consola de Simulación Multisensor (Instructor SENA)</h4>
-            <p style="font-size:12px; color:#94a3b8; margin-bottom:12px;">Modifica cualquiera de los 4 sensores de la Farmacia en tiempo real para evaluar el aprendizaje de los aprendices:</p>
+            <h4>
+                <span>🕹️ Consola de Simulación Avanzada (Instructor SENA)</span>
+                <label style="font-size:12px; color:#cbd5e1; cursor:pointer;">
+                    <input type="checkbox" id="autoNoiseToggle" checked onchange="toggleAutoNoise()"> 🔄 Fluctuación Auto
+                </label>
+            </h4>
+
+            <!-- MACROS DE ESCENARIOS RÁPIDOS -->
+            <div class="macro-section">
+                <h5>Escenarios de Emergencia Prediseñados (Macros 1-Click)</h5>
+                <div class="macro-buttons">
+                    <button class="btn-macro success" onclick="ejecutarMacro('normal')">✅ Restablecer Todo a Normal</button>
+                    <button class="btn-macro danger" onclick="ejecutarMacro('apagon')">⚡ Simular Apagón General</button>
+                    <button class="btn-macro danger" onclick="ejecutarMacro('nevera_abierta')">🚪 Puerta Nevera Abierta</button>
+                    <button class="btn-macro danger" onclick="ejecutarMacro('lluvia')">🌧️ Inundación / Humedad Extrema</button>
+                </div>
+            </div>
+
+            <p style="font-size:11px; color:#94a3b8; margin-bottom:10px;">Controles Individuales por Dispositivo:</p>
             
             <div class="sensor-control-grid">
                 <!-- Control Energía -->
                 <div class="sensor-card-ctrl">
                     <h5><span>⚡ Energía Red</span> <span id="ctrl-val-energia" style="color:#10b981;">115 V</span></h5>
-                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('energia', 0, 'OK')">Normal (115V)</button>
-                    <button class="btn-sim" style="background:#f59e0b;" onclick="modificarSensor('energia', -25, 'WARNING')">Bajo Voltaje</button>
-                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('energia', -115, 'CRITICAL')">Corte Energía</button>
+                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('energia', 115, 'OK')">Normal (115V)</button>
+                    <button class="btn-sim" style="background:#f59e0b;" onclick="modificarSensor('energia', 92, 'WARNING')">Bajo Voltaje</button>
+                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('energia', 0, 'CRITICAL')">Corte Energía</button>
                 </div>
 
                 <!-- Control Nevera 1 -->
@@ -324,88 +386,79 @@
 
     </div>
 
+    <!-- Contenedor de Notificaciones Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <script>
-        // BASE DE DATOS MULTISENSOR
-        const sensors = {
-            energia: {
-                id: "#6722",
-                name: "Energía",
-                gaugeTitle: "Voltaje Red Eléctrica",
-                unit: "V",
-                value: 115.0,
-                min: 0,
-                max: 240,
-                warnThreshold: 90.0,
-                critThreshold: 50.0,
-                status: "OK", // OK, WARNING, CRITICAL
-                icon: "✓",
-                color: "#10b981",
-                bannerMsg: "Energía en rango nominal (115 V) - Suministro eléctrico estable.",
-                lastFail: "120 d",
-                liveData: [115, 114, 115, 116, 115, 115, 114, 115]
-            },
-            nevera1: {
-                id: "#6723",
-                name: "Nevera 1",
-                gaugeTitle: "Temperatura Refrigeración Medicamentos",
-                unit: "°C",
-                value: 4.2,
-                min: -5.0,
-                max: 15.0,
-                warnThreshold: 8.0,
-                critThreshold: 12.0,
-                status: "OK",
-                icon: "✓",
-                color: "#10b981",
-                bannerMsg: "Cadena de frío conservada (4.2 °C) - Rango normativo: 2.0 °C a 8.0 °C.",
-                lastFail: "45 d",
-                liveData: [4.1, 4.2, 4.3, 4.2, 4.1, 4.2, 4.3, 4.2]
-            },
-            temp_ambiente: {
-                id: "#6725",
-                name: "TEMP AMBIENTE",
-                gaugeTitle: "Ambiente",
-                unit: "°C",
-                value: 25.3,
-                min: 0.0,
-                max: 31.0,
-                warnThreshold: 25.0,
-                critThreshold: 28.0,
-                status: "WARNING",
-                icon: "W",
-                color: "#f59e0b",
-                bannerMsg: "25.3 °C (Ambiente) está por encima del límite de advertencia 25.0 °C en Ambiente. ADVERTENCIA TEMPERATURA.",
-                lastFail: "72 d",
-                liveData: [24.8, 25.0, 25.1, 25.2, 25.3, 25.3, 25.4, 25.3]
-            },
-            humedad: {
-                id: "#6726",
-                name: "HUMEDAD",
-                gaugeTitle: "Humedad Relativa Ambiente",
-                unit: "%",
-                value: 78.5,
-                min: 0.0,
-                max: 100.0,
-                warnThreshold: 65.0,
-                critThreshold: 75.0,
-                status: "CRITICAL",
-                icon: "!",
-                color: "#ef4444",
-                bannerMsg: "78.5 % (Humedad) está por encima del LÍMITE CRÍTICO de 75.0 % en Farmacia. ¡ALERTA HUMEDAD ELEVADA!",
-                lastFail: "0 d",
-                liveData: [70, 72, 74, 76, 77, 78, 78.5, 78.5]
-            }
+        // ESTADO DE SENSORES CON PERSISTENCIA
+        const defaultSensors = {
+            energia: { id: "#6722", name: "Energía", gaugeTitle: "Voltaje Red Eléctrica", unit: "V", value: 115.0, min: 0, max: 240, warnThreshold: 90.0, critThreshold: 50.0, status: "OK", icon: "✓", color: "#10b981", bannerMsg: "Energía en rango nominal (115 V) - Suministro eléctrico estable.", lastFail: "120 d", liveData: [115, 114, 115, 116, 115, 115, 114, 115] },
+            nevera1: { id: "#6723", name: "Nevera 1", gaugeTitle: "Temperatura Refrigeración", unit: "°C", value: 4.2, min: -5.0, max: 15.0, warnThreshold: 8.0, critThreshold: 12.0, status: "OK", icon: "✓", color: "#10b981", bannerMsg: "Cadena de frío conservada (4.2 °C) - Rango normativo: 2.0 °C a 8.0 °C.", lastFail: "45 d", liveData: [4.1, 4.2, 4.3, 4.2, 4.1, 4.2, 4.3, 4.2] },
+            temp_ambiente: { id: "#6725", name: "TEMP AMBIENTE", gaugeTitle: "Ambiente", unit: "°C", value: 25.3, min: 0.0, max: 31.0, warnThreshold: 25.0, critThreshold: 28.0, status: "WARNING", icon: "W", color: "#f59e0b", bannerMsg: "25.3 °C (Ambiente) está por encima del límite de advertencia 25.0 °C en Ambiente.", lastFail: "72 d", liveData: [24.8, 25.0, 25.1, 25.2, 25.3, 25.3, 25.4, 25.3] },
+            humedad: { id: "#6726", name: "HUMEDAD", gaugeTitle: "Humedad Relativa Ambiente", unit: "%", value: 78.5, min: 0.0, max: 100.0, warnThreshold: 65.0, critThreshold: 75.0, status: "CRITICAL", icon: "!", color: "#ef4444", bannerMsg: "78.5 % (Humedad) está por encima del LÍMITE CRÍTICO de 75.0 % en Farmacia.", lastFail: "0 d", liveData: [70, 72, 74, 76, 77, 78, 78.5, 78.5] }
         };
 
+        let sensors = JSON.parse(localStorage.getItem('prtg_sensors')) || defaultSensors;
         let currentSensorKey = "temp_ambiente";
-        let logs = [];
-        let historicalData = [];
-        let liveLabels = ['09:10', '09:11', '09:12', '09:13', '09:14', '09:15', '09:16', '09:17'];
+        let logs = JSON.parse(localStorage.getItem('prtg_logs')) || [];
+        let historicalData = JSON.parse(localStorage.getItem('prtg_history')) || [];
+        let autoNoiseActive = true;
 
-        // OBJETOS DE GRÁFICAS
+        let liveLabels = ['09:10', '09:11', '09:12', '09:13', '09:14', '09:15', '09:16', '09:17'];
         let chartLiveInst, chart24hInst, chart10dInst, chart365dInst;
 
-        // DROPDOWN
+        // RELOJ EN VIVO
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('liveClock').innerText = now.toLocaleString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ALERTA SONORA (SINTETIZADOR WEB AUDIO API)
+        function playAlertSound(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'CRITICAL') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(880, ctx.currentTime);
+                    osc.frequency.setValueAtTime(440, ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } else if (type === 'WARNING') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.15);
+                }
+            } catch(e) { console.log("Audio no habilitado", e); }
+        }
+
+        // SISTEMA DE NOTIFICACIONES TOAST (SIMULACIÓN SMS)
+        function triggerToast(title, message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="toast-title"><span>${title}</span> <small>${new Date().toLocaleTimeString()}</small></div>
+                <div>${message}</div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s';
+                setTimeout(() => toast.remove(), 500);
+            }, 4500);
+        }
+
+        // DROPDOWN DE SENSORES
         function toggleDropdown() {
             document.getElementById('sensorDropdown').classList.toggle('show');
         }
@@ -413,41 +466,33 @@
         window.onclick = function(event) {
             if (!event.target.matches('.sensor-select-btn') && !event.target.matches('.sensor-select-btn *')) {
                 const dropdowns = document.getElementsByClassName("dropdown-menu");
-                for (let i = 0; i < dropdowns.length; i++) {
-                    dropdowns[i].classList.remove('show');
-                }
+                for (let i = 0; i < dropdowns.length; i++) dropdowns[i].classList.remove('show');
             }
         }
 
-        // SELECCIÓN DE SENSOR
         function selectSensor(key) {
             currentSensorKey = key;
-            
-            // Actualizar clase active en el dropdown
             document.querySelectorAll('.dropdown-item').forEach(el => el.classList.remove('active'));
             event.currentTarget.classList.add('active');
 
             updateAllUI();
             
-            // Destruir gráficos para recalcular
             if(chartLiveInst) { chartLiveInst.destroy(); chartLiveInst = null; initChartLive(); }
             if(chart24hInst) { chart24hInst.destroy(); chart24hInst = null; initChart24h(); }
             if(chart10dInst) { chart10dInst.destroy(); chart10dInst = null; initChart10d(); }
             if(chart365dInst) { chart365dInst.destroy(); chart365dInst = null; initChart365d(); }
         }
 
-        // ACTUALIZACIÓN GENERAL DE LA INTERFAZ
+        // ACTUALIZACIÓN DE INTERFAZ Y ESTADOS
         function updateAllUI() {
             const s = sensors[currentSensorKey];
 
-            // 1. Textos del sensor activo
             document.getElementById('currentSensorName').innerText = s.name;
             document.getElementById('titleSensorName').innerText = s.name;
             document.querySelectorAll('.active-sensor-name').forEach(el => el.innerText = s.name);
             document.getElementById('sensorId').innerText = s.id;
             document.getElementById('lastFailTime').innerText = s.lastFail;
 
-            // Icono e indicador de estado
             const iconSpan = document.getElementById('currentSensorIcon');
             iconSpan.innerText = s.icon;
             iconSpan.className = `status-icon icon-${s.status === 'OK' ? 'green' : (s.status === 'WARNING' ? 'yellow' : 'red')}`;
@@ -455,10 +500,10 @@
             document.getElementById('titleIcon').innerText = s.icon;
             document.getElementById('statusBadge').innerText = s.status === 'OK' ? 'OPERATIVO' : (s.status === 'WARNING' ? 'ADVERTENCIA' : 'CRÍTICO');
 
-            // Colores del banner y barra de título
             const titleBar = document.getElementById('titleBar');
             const alertBanner = document.getElementById('alertBanner');
 
+            titleBar.className = 'sensor-title-bar';
             if(s.status === 'OK') {
                 titleBar.style.backgroundColor = "#10b981";
                 alertBanner.style.backgroundColor = "#10b981";
@@ -468,29 +513,28 @@
             } else {
                 titleBar.style.backgroundColor = "#dc2626";
                 alertBanner.style.backgroundColor = "#ef4444";
+                titleBar.classList.add('pulse-critical');
             }
 
             alertBanner.innerText = s.bannerMsg;
 
-            // 2. Dial / Manómetro (Gauge)
+            // Gauge Dial
             document.getElementById('gaugeTitle').innerText = s.gaugeTitle;
             document.getElementById('gaugeMinLbl').innerText = `${s.min.toFixed(1)} ${s.unit}`;
             document.getElementById('gaugeMaxLbl').innerText = `${s.max.toFixed(1)} ${s.unit}`;
             document.getElementById('gaugeValueDisplay').innerText = `${s.value.toFixed(1)} ${s.unit}`;
 
-            // Rotación Aguja
             let clampedVal = Math.max(s.min, Math.min(s.max, s.value));
             let pct = (clampedVal - s.min) / (s.max - s.min);
             let deg = -90 + (pct * 180);
             document.getElementById('needle').style.transform = `rotate(${deg}deg)`;
 
-            // Config Formulario
             document.getElementById('cfgName').value = s.name;
             document.getElementById('cfgWarn').value = s.warnThreshold;
             document.getElementById('cfgCrit').value = s.critThreshold;
 
-            // 3. Badges globales de estado
             updateGlobalBadges();
+            saveState();
         }
 
         function updateGlobalBadges() {
@@ -500,14 +544,12 @@
                 else if(sensors[k].status === 'WARNING') yellowCount++;
                 else greenCount++;
 
-                // Actualizar iconos en el dropdown menu
                 const dropIcon = document.getElementById(`drop-icon-${k}`);
                 if(dropIcon) {
                     dropIcon.innerText = sensors[k].icon;
                     dropIcon.className = `status-icon icon-${sensors[k].status === 'OK' ? 'green' : (sensors[k].status === 'WARNING' ? 'yellow' : 'red')}`;
                 }
 
-                // Actualizar valores en panel instructor
                 const ctrlVal = document.getElementById(`ctrl-val-${k}`);
                 if(ctrlVal) {
                     ctrlVal.innerText = `${sensors[k].value.toFixed(1)} ${sensors[k].unit}`;
@@ -518,25 +560,28 @@
             document.getElementById('globalBadgeRed').innerText = `! ${redCount}`;
             document.getElementById('globalBadgeYellow').innerText = `W ${yellowCount}`;
             document.getElementById('globalBadgeGreen').innerText = `✓ ${greenCount}`;
+            document.getElementById('logCount').innerText = logs.length;
         }
 
-        // MODIFICACIÓN DE SENSORES DESDE EL PANEL
-        function modificarSensor(key, nuevoValor, nuevoEstado) {
+        // CONTROL DE SENSORES Y ESCENARIOS
+        function modificarSensor(key, nuevoValor, nuevoEstado, silent = false) {
             let s = sensors[key];
-            
-            if(key === 'energia' && nuevoEstado === 'WARNING') s.value = 95.0;
-            else if(key === 'energia' && nuevoEstado === 'CRITICAL') s.value = 0.0;
-            else s.value = nuevoValor;
-
+            s.value = nuevoValor;
             s.status = nuevoEstado;
             s.icon = nuevoEstado === 'OK' ? '✓' : (nuevoEstado === 'WARNING' ? 'W' : '!');
 
-            // Mensajes adaptativos
             if(nuevoEstado === 'OK') s.bannerMsg = `${s.name} operando en parámetros normales (${s.value.toFixed(1)} ${s.unit}).`;
             else if(nuevoEstado === 'WARNING') s.bannerMsg = `${s.name} (${s.value.toFixed(1)} ${s.unit}) ha superado el límite de advertencia.`;
-            else s.bannerMsg = `¡ALERTA CRÍTICA! ${s.name} registra valores fuera de rango permitido (${s.value.toFixed(1)} ${s.unit}).`;
+            else s.bannerMsg = `¡ALERTA CRÍTICA! ${s.name} registra valores fuera de rango (${s.value.toFixed(1)} ${s.unit}).`;
 
             addLog(s.name, nuevoEstado, s.bannerMsg);
+
+            if(!silent) {
+                playAlertSound(nuevoEstado);
+                if(nuevoEstado !== 'OK') {
+                    triggerToast(`[SMS -> Regente]: Alerta ${s.name}`, s.bannerMsg, nuevoEstado.toLowerCase());
+                }
+            }
             
             if(currentSensorKey === key) updateAllUI();
             else updateGlobalBadges();
@@ -548,7 +593,63 @@
             }
         }
 
-        // AGREGAR EVENTOS DE LOG
+        // MACROS PREDISEÑADAS DE ENSEÑANZA
+        function ejecutarMacro(escenario) {
+            if(escenario === 'normal') {
+                modificarSensor('energia', 115, 'OK', true);
+                modificarSensor('nevera1', 4.2, 'OK', true);
+                modificarSensor('temp_ambiente', 22.0, 'OK', true);
+                modificarSensor('humedad', 55.0, 'OK', true);
+                triggerToast('Sistema Restablecido', 'Todas las variables retornaron a parámetros nominales.', 'info');
+            } else if(escenario === 'apagon') {
+                modificarSensor('energia', 0, 'CRITICAL');
+                modificarSensor('nevera1', 13.5, 'CRITICAL');
+                modificarSensor('temp_ambiente', 28.5, 'CRITICAL');
+                triggerToast('EMERGENCIA: Apagón', 'Corte eléctrico general. Temperatura en aumento.', 'danger');
+            } else if(escenario === 'nevera_abierta') {
+                modificarSensor('nevera1', 12.8, 'CRITICAL');
+                triggerToast('ALERTA: Nevera 1', 'Fuga de frío detectada en Nevera de Medicamentos.', 'danger');
+            } else if(escenario === 'lluvia') {
+                modificarSensor('humedad', 88.0, 'CRITICAL');
+                triggerToast('ALERTA: Humedad', 'Exceso de humedad relativa ambiental por lluvia.', 'danger');
+            }
+        }
+
+        // AUTO-FLUCTUACIÓN EN TIEMPO REAL
+        setInterval(() => {
+            if(!autoNoiseActive) return;
+            
+            for(let key in sensors) {
+                let s = sensors[key];
+                if(s.status === 'OK') {
+                    // Pequeña fluctuación realista (+/- 0.1 o 0.2)
+                    let delta = (Math.random() - 0.5) * 0.2;
+                    s.value = Math.max(s.min, Math.min(s.max, s.value + delta));
+                }
+            }
+
+            const current = sensors[currentSensorKey];
+            document.getElementById('gaugeValueDisplay').innerText = `${current.value.toFixed(1)} ${current.unit}`;
+            
+            // Actualizar la aguja
+            let clampedVal = Math.max(current.min, Math.min(current.max, current.value));
+            let pct = (clampedVal - current.min) / (current.max - current.min);
+            let deg = -90 + (pct * 180);
+            document.getElementById('needle').style.transform = `rotate(${deg}deg)`;
+
+            // Push a gráfica en vivo
+            if(chartLiveInst) {
+                chartLiveInst.data.datasets[0].data.push(current.value);
+                chartLiveInst.data.datasets[0].data.shift();
+                chartLiveInst.update('none'); // Update suave sin animación pesada
+            }
+        }, 3000);
+
+        function toggleAutoNoise() {
+            autoNoiseActive = document.getElementById('autoNoiseToggle').checked;
+        }
+
+        // AGREGAR LOGS Y AUDITORÍA
         function addLog(sensorName, level, message) {
             const timeStr = new Date().toLocaleTimeString();
             const dateStr = new Date().toLocaleDateString();
@@ -556,24 +657,35 @@
             logs.unshift({ time: `${dateStr} ${timeStr}`, sensor: sensorName, level, message });
             historicalData.unshift({ time: `${dateStr} ${timeStr}`, sensor: sensorName, value: `${sensors[currentSensorKey].value.toFixed(1)} ${sensors[currentSensorKey].unit}`, status: level });
 
-            if(logs.length > 50) logs.pop();
-            if(historicalData.length > 50) historicalData.pop();
+            if(logs.length > 100) logs.pop();
+            if(historicalData.length > 100) historicalData.pop();
 
             renderLogs();
+            saveState();
         }
 
         function renderLogs() {
+            const filter = document.getElementById('logFilter') ? document.getElementById('logFilter').value : 'ALL';
+
             document.getElementById('miniLogTable').innerHTML = logs.slice(0, 5).map(l => `
                 <tr><td>${l.time.split(' ')[1]}</td><td><b>${l.sensor}</b></td><td><span class="status-icon icon-${l.level === 'OK' ? 'green' : (l.level === 'WARNING' ? 'yellow' : 'red')}">${l.level === 'OK' ? '✓' : (l.level === 'WARNING' ? 'W' : '!')}</span></td><td>${l.message}</td></tr>
             `).join('');
 
-            document.getElementById('fullLogTable').innerHTML = logs.map(l => `
+            const filteredLogs = logs.filter(l => filter === 'ALL' || l.level === filter);
+
+            document.getElementById('fullLogTable').innerHTML = filteredLogs.map(l => `
                 <tr><td>${l.time}</td><td><b>${l.sensor}</b></td><td><b>${l.level}</b></td><td>${l.message}</td></tr>
             `).join('');
 
             document.getElementById('tableHistorical').innerHTML = historicalData.map(h => `
                 <tr><td>${h.time}</td><td>${h.sensor}</td><td><b>${h.value}</b></td><td>${h.status}</td></tr>
             `).join('');
+        }
+
+        function saveState() {
+            localStorage.setItem('prtg_sensors', JSON.stringify(sensors));
+            localStorage.setItem('prtg_logs', JSON.stringify(logs));
+            localStorage.setItem('prtg_history', JSON.stringify(historicalData));
         }
 
         // PESTAÑAS
@@ -590,24 +702,20 @@
             if(tabId === 'tab-365d') initChart365d();
         }
 
-        // CONFIGURACIÓN
         function guardarConfiguracion() {
             let s = sensors[currentSensorKey];
             s.name = document.getElementById('cfgName').value;
             s.warnThreshold = parseFloat(document.getElementById('cfgWarn').value);
             s.critThreshold = parseFloat(document.getElementById('cfgCrit').value);
 
-            addLog(s.name, "INFO", "Configuración de parámetros actualizada.");
-            alert("Parámetros guardados con éxito.");
+            addLog(s.name, "INFO", "Parámetros de configuración actualizados por el usuario.");
+            triggerToast('Configuración Guardada', `Límites para ${s.name} actualizados.`, 'info');
             updateAllUI();
         }
 
-        // EXPORTAR CSV
         function exportarCSV() {
             let csv = "Fecha,Sensor,Valor,Estado\n";
-            historicalData.forEach(r => {
-                csv += `"${r.time}","${r.sensor}","${r.value}","${r.status}"\n`;
-            });
+            historicalData.forEach(r => { csv += `"${r.time}","${r.sensor}","${r.value}","${r.status}"\n`; });
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -616,7 +724,7 @@
             a.click();
         }
 
-        // INICIALIZACIÓN DE GRÁFICAS ADAPTATIVAS
+        // GRÁFICAS DE CHART.JS
         function initChartLive() {
             if(chartLiveInst) return;
             const s = sensors[currentSensorKey];
@@ -625,9 +733,9 @@
                 type: 'line',
                 data: {
                     labels: liveLabels,
-                    datasets: [{ label: `${s.name} (${s.unit})`, data: s.liveData, borderColor: s.color, backgroundColor: 'rgba(2,132,199,0.1)', fill: true, tension: 0.3 }]
+                    datasets: [{ label: `${s.name} (${s.unit})`, data: [...s.liveData], borderColor: s.color, backgroundColor: 'rgba(2,132,199,0.1)', fill: true, tension: 0.3 }]
                 },
-                options: { responsive: true }
+                options: { responsive: true, animation: false }
             });
         }
 
@@ -682,14 +790,15 @@
             });
         }
 
-        // INICIALIZACIÓN DEL SISTEMA
-        addLog("SISTEMA", "OK", "Servidor de Monitoreo PRTG iniciado correctamente.");
-        addLog("HUMEDAD", "CRITICAL", "78.5 % superó el límite máximo seguro (75.0 %).");
-        addLog("TEMP AMBIENTE", "WARNING", "25.3 °C superó el límite de advertencia (25.0 °C).");
-        addLog("Nevera 1", "OK", "Temperatura de cadena de frío estable (4.2 °C).");
-        addLog("Energía", "OK", "Red eléctrica con voltaje nominal (115 V).");
+        // INICIALIZACIÓN
+        if(logs.length === 0) {
+            addLog("SISTEMA", "OK", "Servidor de Monitoreo PRTG iniciado correctamente.");
+            addLog("HUMEDAD", "CRITICAL", "78.5 % superó el límite máximo seguro (75.0 %).");
+            addLog("TEMP AMBIENTE", "WARNING", "25.3 °C superó el límite de advertencia (25.0 °C).");
+        }
 
         updateAllUI();
+        renderLogs();
     </script>
 </body>
 </html>
