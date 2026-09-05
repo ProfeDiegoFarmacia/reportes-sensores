@@ -49,8 +49,8 @@
         .icon-red { background: #ef4444; }
 
         /* Barra de Título y Banner de Alerta */
-        .sensor-title-bar { background-color: #d97706; color: #fff; padding: 12px 20px; font-size: 17px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: background 0.3s; }
-        .alert-banner { background-color: #f59e0b; color: #fff; padding: 10px 20px; font-size: 13px; font-weight: 600; border-bottom: 1px solid rgba(0,0,0,0.1); transition: background 0.3s; }
+        .sensor-title-bar { background-color: #10b981; color: #fff; padding: 12px 20px; font-size: 17px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: background 0.3s; }
+        .alert-banner { background-color: #10b981; color: #fff; padding: 10px 20px; font-size: 13px; font-weight: 600; border-bottom: 1px solid rgba(0,0,0,0.1); transition: background 0.3s; }
 
         /* Pestañas PRTG */
         .tabs { display: flex; background-color: #e2e8f0; border-bottom: 2px solid #cbd5e1; padding-left: 15px; overflow-x: auto; }
@@ -93,7 +93,11 @@
         .btn { padding: 7px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; background: #0284c7; color: #fff; font-size: 12px; transition: background 0.2s; }
         .btn:hover { background: #0369a1; }
 
-        /* Panel Instructor y Macros */
+        /* Banner de Diagnóstico 24h */
+        .incident-report-box { background: #fef2f2; border: 1px solid #f87171; border-left: 5px solid #ef4444; padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; font-size: 12px; color: #991b1b; }
+        .incident-report-box.clean { background: #f0fdf4; border-color: #86efac; border-left-color: #10b981; color: #166534; }
+
+        /* Panel Instructor */
         .instructor-panel { background: #0f172a; color: #fff; padding: 20px; border-radius: 8px; margin-top: 25px; border-left: 6px solid #38bdf8; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .instructor-panel h4 { color: #38bdf8; margin-bottom: 6px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
         
@@ -112,7 +116,7 @@
         .sensor-card-ctrl h5 { font-size: 13px; color: #f8fafc; margin-bottom: 6px; display: flex; justify-content: space-between; }
         .btn-sim { padding: 5px 8px; margin-right: 4px; margin-top: 5px; border: none; border-radius: 3px; font-weight: bold; cursor: pointer; color: #fff; font-size: 11px; }
 
-        /* Contenedor Toast / Notificaciones SMS */
+        /* Contenedor Toast */
         .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast { background: #0f172a; color: #fff; padding: 12px 16px; border-radius: 6px; border-left: 5px solid #0284c7; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 12px; min-width: 280px; max-width: 360px; animation: slideIn 0.3s ease-out; }
         .toast-title { font-weight: bold; color: #38bdf8; margin-bottom: 3px; display: flex; justify-content: space-between; }
@@ -121,32 +125,32 @@
         .toast.warning { border-left-color: #f59e0b; }
         .toast.warning .toast-title { color: #fde047; }
 
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 1; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <!-- Header Superior PRTG con Reloj del Sistema -->
+    <!-- Header Superior PRTG -->
     <div class="header">
         <div class="breadcrumb">
             Dispositivos > Sonda local > IOT > CLIENTES SENA > FARMACIA (SENA) > FARMACIA > 
             <div class="sensor-dropdown-container">
                 <button class="sensor-select-btn" onclick="toggleDropdown()">
-                    <span id="currentSensorIcon" class="status-icon icon-yellow">W</span>
-                    <span id="currentSensorName">TEMP AMBIENTE</span> ▼
+                    <span id="currentSensorIcon" class="status-icon icon-green">✓</span>
+                    <span id="currentSensorName">Nevera 1</span> ▼
                 </button>
                 <div class="dropdown-menu" id="sensorDropdown">
                     <div class="dropdown-item" onclick="selectSensor('energia')">
-                        <span class="status-icon icon-green" id="drop-icon-energia">✓</span> Energía
+                        <span class="status-icon icon-green" id="drop-icon-energia">✓</span> Energia
                     </div>
-                    <div class="dropdown-item" onclick="selectSensor('nevera1')">
+                    <div class="dropdown-item active" onclick="selectSensor('nevera1')">
                         <span class="status-icon icon-green" id="drop-icon-nevera1">✓</span> Nevera 1
                     </div>
-                    <div class="dropdown-item active" onclick="selectSensor('temp_ambiente')">
-                        <span class="status-icon icon-yellow" id="drop-icon-temp_ambiente">W</span> TEMP AMBIENTE
+                    <div class="dropdown-item" onclick="selectSensor('temp_ambiente')">
+                        <span class="status-icon icon-green" id="drop-icon-temp_ambiente">✓</span> TEMP AMBIENTE
                     </div>
                     <div class="dropdown-item" onclick="selectSensor('humedad')">
-                        <span class="status-icon icon-red" id="drop-icon-humedad">!</span> HUMEDAD
+                        <span class="status-icon icon-green" id="drop-icon-humedad">✓</span> HUMEDAD
                     </div>
                 </div>
             </div>
@@ -154,32 +158,31 @@
 
         <div style="display:flex; align-items:center; gap:12px;">
             <div class="system-clock" id="liveClock">00/00/0000 00:00:00</div>
-            <!-- Badges de Estado Globale -->
             <div class="prtg-badges">
                 <span class="badge-item badge-log">Logs: <span id="logCount">0</span></span>
                 <span class="badge-item badge-red" id="globalBadgeRed">! 0</span>
                 <span class="badge-item badge-yellow" id="globalBadgeYellow">W 0</span>
-                <span class="badge-item badge-green" id="globalBadgeGreen">✓ 0</span>
+                <span class="badge-item badge-green" id="globalBadgeGreen">✓ 4</span>
             </div>
         </div>
     </div>
 
     <!-- Title Bar del Sensor -->
     <div class="sensor-title-bar" id="titleBar">
-        <span><span id="titleIcon">W</span> Sensor <span id="titleSensorName">TEMP AMBIENTE</span></span>
-        <span style="font-size:12px; font-weight:normal;">Estado actual: <b id="statusBadge">ADVERTENCIA</b></span>
+        <span><span id="titleIcon">✓</span> Sensor <span id="titleSensorName">Nevera 1</span></span>
+        <span style="font-size:12px; font-weight:normal;">Estado actual: <b id="statusBadge">OPERATIVO</b></span>
     </div>
 
     <!-- Alert Banner -->
     <div class="alert-banner" id="alertBanner">
-        Cargando monitoreo de variables de farmacia...
+        Cargando monitoreo ambiental normativo de farmacia...
     </div>
 
     <!-- Pestañas PRTG -->
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('tab-resumen', this)">Resumen</div>
+        <div class="tab" onclick="switchTab('tab-resumen', this)">Resumen</div>
         <div class="tab" onclick="switchTab('tab-vivo', this)">Datos en vivo</div>
-        <div class="tab" onclick="switchTab('tab-24h', this)">24 horas</div>
+        <div class="tab active" onclick="switchTab('tab-24h', this)">24 horas</div>
         <div class="tab" onclick="switchTab('tab-10d', this)">10 días</div>
         <div class="tab" onclick="switchTab('tab-365d', this)">365 días</div>
         <div class="tab" onclick="switchTab('tab-historico', this)">Datos históricos</div>
@@ -190,21 +193,21 @@
     <div class="main-container">
 
         <!-- 1. PESTAÑA RESUMEN -->
-        <div id="tab-resumen" class="tab-content active">
+        <div id="tab-resumen" class="tab-content">
             <div class="info-grid card">
-                <div class="info-item"><div>Último escaneo:</div><strong><span id="scanTimer">3</span> s</strong></div>
-                <div class="info-item"><div>Último OK:</div><strong><span id="lastOkTime">12</span> s</strong></div>
-                <div class="info-item"><div>Último fallo:</div><strong><span id="lastFailTime">72 d</span></strong></div>
-                <div class="info-item"><div>Tiempo inactividad:</div><strong>0.012%</strong></div>
+                <div class="info-item"><div>Último escaneo:</div><strong><span id="scanTimer">18</span> s</strong></div>
+                <div class="info-item"><div>Último OK:</div><strong>18 s</strong></div>
+                <div class="info-item"><div>Último fallo:</div><strong><span id="lastFailTime">65 d</span></strong></div>
+                <div class="info-item"><div>Tiempo disponible:</div><strong>99.9988%</strong></div>
+                <div class="info-item"><div>Tiempo inactividad:</div><strong>0.0012%</strong></div>
                 <div class="info-item"><div>Cobertura:</div><strong>100%</strong></div>
-                <div class="info-item"><div>Intervalo escaneo:</div><strong>3 s (Simulado)</strong></div>
-                <div class="info-item"><div>ID del Sensor:</div><strong><span id="sensorId">#6725</span></strong></div>
-                <div class="info-item"><div>Tipo de Sensor:</div><strong>REST Custom SENA IoT v2</strong></div>
+                <div class="info-item"><div>Tipo de sensor:</div><strong>REST (personalizado) v2 (BETA)</strong></div>
+                <div class="info-item"><div>ID del Sensor:</div><strong><span id="sensorId">#6724</span></strong></div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px;">
                 <div class="card">
-                    <h3><span id="gaugeTitle">Ambiente</span></h3>
+                    <h3><span id="gaugeTitle">Temperatura Refrigeración</span></h3>
                     <div class="gauge-wrapper">
                         <div class="gauge-container">
                             <div class="gauge-bg"></div>
@@ -213,10 +216,10 @@
                             <div class="needle-pivot"></div>
                         </div>
                         <div style="display:flex; justify-content:space-between; width:260px; font-size:11px; color:#666; margin-top:5px;">
-                            <span id="gaugeMinLbl">0.0 °C</span>
-                            <span id="gaugeMaxLbl">31.0 °C</span>
+                            <span id="gaugeMinLbl">-5.0 °C</span>
+                            <span id="gaugeMaxLbl">15.0 °C</span>
                         </div>
-                        <div class="gauge-reading" id="gaugeValueDisplay">25.3 °C</div>
+                        <div class="gauge-reading" id="gaugeValueDisplay">4.5 °C</div>
                     </div>
                 </div>
 
@@ -227,55 +230,141 @@
                             <tr><th>Hora</th><th>Sensor</th><th>Nivel</th><th>Mensaje de Evento</th></tr>
                         </thead>
                         <tbody id="miniLogTable">
-                            <!-- JS Inject -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- 2. DATOS EN VIVO -->
+        <!-- 2. DATOS EN VIVO (VISTA GEOSCAN) -->
         <div id="tab-vivo" class="tab-content">
+            <div class="info-grid card" style="margin-bottom:12px;">
+                <div class="info-item"><div>Último escaneo:</div><strong>18 s</strong></div>
+                <div class="info-item"><div>Último OK:</div><strong>18 s</strong></div>
+                <div class="info-item"><div>Último fallo:</div><strong>65 d</strong></div>
+                <div class="info-item"><div>Tiempo disponible:</div><strong>99.9988%</strong></div>
+                <div class="info-item"><div>Tiempo de inactividad:</div><strong>0.0012%</strong></div>
+                <div class="info-item"><div>Cobertura:</div><strong>100%</strong></div>
+                <div class="info-item"><div>Intervalo:</div><strong>60 s</strong></div>
+                <div class="info-item"><div>ID del Sensor:</div><strong>#6724</strong></div>
+            </div>
+
             <div class="card">
-                <h3>Transmisión en Tiempo Real con Autofluctuación - <span class="active-sensor-name">TEMP AMBIENTE</span></h3>
-                <canvas id="chartLive" style="max-height: 320px;"></canvas>
+                <h3>Transmisión en Tiempo Real - <span class="active-sensor-name">Nevera 1</span></h3>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="chartLive"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div style="font-size:12px; color:#475569;">
+                        <b>Promedios (de lecturas recientes):</b> <span id="avgLiveDisplay" style="color:#0284c7; font-weight:bold;">4.5 °C</span> | Inactividad: 0% | Cobertura: 100%
+                    </div>
+                    <span style="font-size:11px; color:#64748b;">Elementos: 50</span>
+                </div>
+                <div style="max-height: 280px; overflow-y: auto;">
+                    <table>
+                        <thead style="position: sticky; top: 0; background: #f8fafc;">
+                            <tr>
+                                <th>Fecha Hora ▲</th>
+                                <th>Valor Registrado</th>
+                                <th>Tiempo de inactividad</th>
+                                <th>Cobertura</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableLiveRows" style="font-family: monospace;">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- 3. 24 HORAS -->
-        <div id="tab-24h" class="tab-content">
+        <!-- 3. 24 HORAS CON AUDITORÍA -->
+        <div id="tab-24h" class="tab-content active">
             <div class="card">
-                <h3>Comportamiento de las Últimas 24 Horas - <span class="active-sensor-name">TEMP AMBIENTE</span></h3>
-                <canvas id="chart24h" style="max-height: 320px;"></canvas>
+                <h3>
+                    <span>Comportamiento de las Últimas 24 Horas - <span class="active-sensor-name">Nevera 1</span></span>
+                    <button class="btn" onclick="initChart24h()" style="padding: 4px 10px; font-size: 11px;">🔄 Refrescar Informe</button>
+                </h3>
+
+                <div id="incidentNoticeBox" class="incident-report-box clean">
+                    Comprobando registro de excursiones...
+                </div>
+                
+                <div class="info-grid" style="margin-bottom: 15px; background: #f8fafc; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                    <div class="info-item"><div>Promedio 24 Horas:</div><strong id="avg24hDisplay">4.5 °C</strong></div>
+                    <div class="info-item"><div>Total Muestras Calculadas:</div><strong>288</strong></div>
+                    <div class="info-item"><div>Tiempo Inactividad:</div><strong style="color:#10b981;" id="inactividad24h">0 %</strong></div>
+                    <div class="info-item"><div>Cobertura:</div><strong style="color:#0284c7;">100 %</strong></div>
+                </div>
+
+                <div style="position: relative; height: 320px; width: 100%;">
+                    <canvas id="chart24h"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Registros del Intervalo de 24 Horas (Muestreo cada 5 min hacia atrás)</h3>
+                <div style="max-height: 320px; overflow-y: auto;">
+                    <table>
+                        <thead style="position: sticky; top: 0; background: #f8fafc;">
+                            <tr>
+                                <th>Fecha y Hora (Intervalo)</th>
+                                <th>Valor Registrado</th>
+                                <th>Estado Auditoría</th>
+                                <th>Tiempo Inactividad</th>
+                                <th>Cobertura</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table24hRows" style="font-family: monospace;">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- 4. 10 DÍAS -->
         <div id="tab-10d" class="tab-content">
             <div class="card">
-                <h3>Histórico Promedio - Últimos 10 Días</h3>
-                <canvas id="chart10d" style="max-height: 320px;"></canvas>
+                <h3>
+                    <span>Histórico Promedio - Últimos 10 Días (Terminando Hoy)</span>
+                    <button class="btn" onclick="initChart10d()" style="padding: 4px 10px; font-size: 11px;">🔄 Actualizar</button>
+                </h3>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="chart10d"></canvas>
+                </div>
             </div>
         </div>
 
         <!-- 5. 365 DÍAS -->
         <div id="tab-365d" class="tab-content">
             <div class="card">
-                <h3>Tendencia Anual de la Variable</h3>
-                <canvas id="chart365d" style="max-height: 320px;"></canvas>
+                <h3>
+                    <span>Tendencia Anual (Últimos 12 Meses hasta el Mes Actual)</span>
+                    <button class="btn" onclick="initChart365d()" style="padding: 4px 10px; font-size: 11px;">🔄 Actualizar</button>
+                </h3>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="chart365d"></canvas>
+                </div>
             </div>
         </div>
 
         <!-- 6. DATOS HISTÓRICOS -->
         <div id="tab-historico" class="tab-content">
             <div class="card">
-                <h3>Tabla de Registros Almacenados <button class="btn" style="float:right;" onclick="exportarCSV()">📥 Exportar CSV</button></h3>
+                <h3>
+                    <span>Libro Oficial de Novedades e Incidencias Registradas</span>
+                    <button class="btn" style="float:right;" onclick="exportarCSV()">📥 Exportar Reporte CSV</button>
+                </h3>
+                <p style="font-size: 11px; color: #64748b; margin-bottom: 10px;">
+                    Registro cronológico inmutable de eventos térmicos, sobrecargas y contingencias sanitarias.
+                </p>
                 <table style="margin-top:10px;">
                     <thead>
-                        <tr><th>Fecha / Hora</th><th>Sensor</th><th>Valor Registrado</th><th>Estado</th></tr>
+                        <tr><th>Fecha / Hora</th><th>Sensor</th><th>Valor Registrado</th><th>Estado</th><th>Detalle Técnico / Causa</th></tr>
                     </thead>
                     <tbody id="tableHistorical">
-                        <!-- JS Inject -->
                     </tbody>
                 </table>
             </div>
@@ -301,7 +390,6 @@
                         <tr><th>Marca de Tiempo</th><th>Sensor</th><th>Tipo</th><th>Descripción del Evento</th></tr>
                     </thead>
                     <tbody id="fullLogTable">
-                        <!-- JS Inject -->
                     </tbody>
                 </table>
             </div>
@@ -310,18 +398,18 @@
         <!-- 8. CONFIGURACIÓN -->
         <div id="tab-config" class="tab-content">
             <div class="card">
-                <h3>Parámetros de Configuración - <span class="active-sensor-name">TEMP AMBIENTE</span></h3>
+                <h3>Parámetros de Configuración - <span class="active-sensor-name">Nevera 1</span></h3>
                 <div class="form-group">
                     <label>Nombre del Sensor:</label>
-                    <input type="text" id="cfgName" value="TEMP AMBIENTE">
+                    <input type="text" id="cfgName" value="Nevera 1">
                 </div>
                 <div class="form-group">
-                    <label>Límite Superior de Advertencia:</label>
-                    <input type="number" id="cfgWarn" value="25.0" step="0.1">
+                    <label>Límite Superior de Advertencia (°C):</label>
+                    <input type="number" id="cfgWarn" value="8.0" step="0.1">
                 </div>
                 <div class="form-group">
-                    <label>Límite Superior Crítico:</label>
-                    <input type="number" id="cfgCrit" value="28.0" step="0.1">
+                    <label>Límite Superior Crítico (°C):</label>
+                    <input type="number" id="cfgCrit" value="10.0" step="0.1">
                 </div>
                 <button class="btn" onclick="guardarConfiguracion()">💾 Guardar Configuración</button>
             </div>
@@ -330,92 +418,207 @@
         <!-- CONSOLA MULTISENSOR DEL INSTRUCTOR -->
         <div class="instructor-panel">
             <h4>
-                <span>🕹️ Consola de Simulación Avanzada (Instructor SENA)</span>
+                <span>🕹️ Consola de Simulación Avanzada de Farmacia (SENA Pro)</span>
                 <label style="font-size:12px; color:#cbd5e1; cursor:pointer;">
                     <input type="checkbox" id="autoNoiseToggle" checked onchange="toggleAutoNoise()"> 🔄 Fluctuación Auto
                 </label>
             </h4>
 
-            <!-- MACROS DE ESCENARIOS RÁPIDOS -->
+            <!-- MACROS DE ESCENARIOS DE APRENDIZAJE -->
             <div class="macro-section">
-                <h5>Escenarios de Emergencia Prediseñados (Macros 1-Click)</h5>
+                <h5>Escenarios de Emergencia Farmacéutica (Simulación Multivariable Cruzada)</h5>
                 <div class="macro-buttons">
-                    <button class="btn-macro success" onclick="ejecutarMacro('normal')">✅ Restablecer Todo a Normal</button>
-                    <button class="btn-macro danger" onclick="ejecutarMacro('apagon')">⚡ Simular Apagón General</button>
-                    <button class="btn-macro danger" onclick="ejecutarMacro('nevera_abierta')">🚪 Puerta Nevera Abierta</button>
-                    <button class="btn-macro danger" onclick="ejecutarMacro('lluvia')">🌧️ Inundación / Humedad Extrema</button>
+                    <button class="btn-macro success" onclick="ejecutarMacro('normal')">✅ 1. Restablecer Todo (Normativo)</button>
+                    <button class="btn-macro danger" onclick="ejecutarMacro('nevera_abierta')">🚪 2. Puerta Nevera Abierta (+Humedad Leve / Cae a 12.18V)</button>
+                    <button class="btn-macro danger" onclick="ejecutarMacro('termostato_pegado')">❄️ 3. Termostato Pegado (Congelación -1.0°C)</button>
+                    <button class="btn-macro danger" onclick="ejecutarMacro('falla_hvac')">🌡️ 4. Falla Climatización / Calor (29°C / Cae a 12.08V)</button>
+                    <button class="btn-macro danger" onclick="ejecutarMacro('lluvia')">🌧️ 5. Lluvia / Humedad Crítica (88% / Cae a 12.12V)</button>
+                    <button class="btn-macro danger" onclick="ejecutarMacro('apagon')">⚡ 6. Apagón General de Red (0.00 V Total)</button>
+                    <button class="btn-macro" style="background:#d97706; border-color:#f59e0b;" onclick="ejecutarMacro('bateria_baja')">🔋 7. Descarga de Batería Respaldo (11.80 V)</button>
+                    <button class="btn-macro" style="background:#475569;" onclick="limpiarTodoHistorial()">🧹 Limpiar Todo el Historial</button>
                 </div>
             </div>
 
             <p style="font-size:11px; color:#94a3b8; margin-bottom:10px;">Controles Individuales por Dispositivo:</p>
             
             <div class="sensor-control-grid">
-                <!-- Control Energía -->
+                <!-- Control Energía (12V DC como Geoscan) -->
                 <div class="sensor-card-ctrl">
-                    <h5><span>⚡ Energía Red</span> <span id="ctrl-val-energia" style="color:#10b981;">115 V</span></h5>
-                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('energia', 115, 'OK')">Normal (115V)</button>
-                    <button class="btn-sim" style="background:#f59e0b;" onclick="modificarSensor('energia', 92, 'WARNING')">Bajo Voltaje</button>
-                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('energia', 0, 'CRITICAL')">Corte Energía</button>
+                    <h5><span>⚡ Energia (Voltios)</span> <span id="ctrl-val-energia" style="color:#10b981;">12.35 Voltios</span></h5>
+                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('energia', 12.35, 'OK')">Normal (12.35V)</button>
+                    <button class="btn-sim" style="background:#f59e0b;" onclick="modificarSensor('energia', 11.80, 'WARNING')">Baja (11.80V)</button>
+                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('energia', 0.00, 'CRITICAL')">Corte (0.00V)</button>
                 </div>
 
                 <!-- Control Nevera 1 -->
                 <div class="sensor-card-ctrl">
-                    <h5><span>❄️ Nevera 1</span> <span id="ctrl-val-nevera1" style="color:#10b981;">4.2 °C</span></h5>
-                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('nevera1', 4.2, 'OK')">Óptimo (4.2°C)</button>
-                    <button class="btn-sim" style="background:#f59e0b;" onclick="modificarSensor('nevera1', 9.5, 'WARNING')">Elevada (9.5°C)</button>
-                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('nevera1', 14.0, 'CRITICAL')">Crítica (14°C)</button>
+                    <h5><span>❄️ Nevera 1</span> <span id="ctrl-val-nevera1" style="color:#10b981;">4.5 °C</span></h5>
+                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('nevera1', 4.5, 'OK')">Óptimo (4.5°C)</button>
+                    <button class="btn-sim" style="background:#3b82f6;" onclick="modificarSensor('nevera1', -1.0, 'CRITICAL')">Congelación (-1°C)</button>
+                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('nevera1', 13.2, 'CRITICAL')">Pérdida Frío (13.2°C)</button>
                 </div>
 
                 <!-- Control Temp Ambiente -->
                 <div class="sensor-card-ctrl">
-                    <h5><span>🌡️ TEMP AMBIENTE</span> <span id="ctrl-val-temp_ambiente" style="color:#f59e0b;">25.3 °C</span></h5>
-                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('temp_ambiente', 22.0, 'OK')">Normal (22°C)</button>
-                    <button class="btn-sim" style="background:#f59e0b;" onclick="modificarSensor('temp_ambiente', 25.3, 'WARNING')">Advertencia</button>
-                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('temp_ambiente', 29.5, 'CRITICAL')">Crítica (29.5°C)</button>
+                    <h5><span>🌡️ TEMP AMBIENTE</span> <span id="ctrl-val-temp_ambiente" style="color:#10b981;">21.5 °C</span></h5>
+                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('temp_ambiente', 21.5, 'OK')">Normal (21.5°C)</button>
+                    <button class="btn-sim" style="background:#f59e0b;" onclick="modificarSensor('temp_ambiente', 25.5, 'WARNING')">Advertencia (25.5°C)</button>
+                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('temp_ambiente', 29.2, 'CRITICAL')">Crítica (29.2°C)</button>
                 </div>
 
                 <!-- Control Humedad -->
                 <div class="sensor-card-ctrl">
-                    <h5><span>💧 HUMEDAD</span> <span id="ctrl-val-humedad" style="color:#ef4444;">78.5 %</span></h5>
-                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('humedad', 55.0, 'OK')">Óptima (55%)</button>
+                    <h5><span>💧 HUMEDAD</span> <span id="ctrl-val-humedad" style="color:#10b981;">52.0 %</span></h5>
+                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('humedad', 52.0, 'OK')">Óptima (52%)</button>
                     <button class="btn-sim" style="background:#f59e0b;" onclick="modificarSensor('humedad', 68.0, 'WARNING')">Alta (68%)</button>
-                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('humedad', 78.5, 'CRITICAL')">Excesiva (78.5%)</button>
+                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('humedad', 88.0, 'CRITICAL')">Excesiva (88%)</button>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- Contenedor de Notificaciones Toast -->
+    <!-- Contenedor Toast -->
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
-        // ESTADO DE SENSORES CON PERSISTENCIA
+        // CONFIGURACIÓN OFICIAL RESOLUCIÓN 1403 DE 2007 (VALORES INICIALES 100% EN REGLA)
         const defaultSensors = {
-            energia: { id: "#6722", name: "Energía", gaugeTitle: "Voltaje Red Eléctrica", unit: "V", value: 115.0, min: 0, max: 240, warnThreshold: 90.0, critThreshold: 50.0, status: "OK", icon: "✓", color: "#10b981", bannerMsg: "Energía en rango nominal (115 V) - Suministro eléctrico estable.", lastFail: "120 d", liveData: [115, 114, 115, 116, 115, 115, 114, 115] },
-            nevera1: { id: "#6723", name: "Nevera 1", gaugeTitle: "Temperatura Refrigeración", unit: "°C", value: 4.2, min: -5.0, max: 15.0, warnThreshold: 8.0, critThreshold: 12.0, status: "OK", icon: "✓", color: "#10b981", bannerMsg: "Cadena de frío conservada (4.2 °C) - Rango normativo: 2.0 °C a 8.0 °C.", lastFail: "45 d", liveData: [4.1, 4.2, 4.3, 4.2, 4.1, 4.2, 4.3, 4.2] },
-            temp_ambiente: { id: "#6725", name: "TEMP AMBIENTE", gaugeTitle: "Ambiente", unit: "°C", value: 25.3, min: 0.0, max: 31.0, warnThreshold: 25.0, critThreshold: 28.0, status: "WARNING", icon: "W", color: "#f59e0b", bannerMsg: "25.3 °C (Ambiente) está por encima del límite de advertencia 25.0 °C en Ambiente.", lastFail: "72 d", liveData: [24.8, 25.0, 25.1, 25.2, 25.3, 25.3, 25.4, 25.3] },
-            humedad: { id: "#6726", name: "HUMEDAD", gaugeTitle: "Humedad Relativa Ambiente", unit: "%", value: 78.5, min: 0.0, max: 100.0, warnThreshold: 65.0, critThreshold: 75.0, status: "CRITICAL", icon: "!", color: "#ef4444", bannerMsg: "78.5 % (Humedad) está por encima del LÍMITE CRÍTICO de 75.0 % en Farmacia.", lastFail: "0 d", liveData: [70, 72, 74, 76, 77, 78, 78.5, 78.5] }
+            energia: { id: "#6723", name: "Energia", gaugeTitle: "Energia (Voltios)", unit: "Voltios", value: 12.35, nominalValue: 12.35, min: 10.0, max: 14.0, warnThreshold: 12.00, critThreshold: 11.50, status: "OK", icon: "✓", color: "#0284c7", bannerMsg: "Energia en rango nominal (12.35 Voltios) - Suministro y batería conformes.", lastFail: "65 d" },
+            nevera1: { id: "#6724", name: "Nevera 1", gaugeTitle: "Temperatura Refrigeración", unit: "°C", value: 4.5, nominalValue: 4.5, min: -5.0, max: 15.0, warnThreshold: 8.0, critThreshold: 10.0, status: "OK", icon: "✓", color: "#10b981", bannerMsg: "Cadena de frío conservada (4.5 °C) - Rango normativo: 2.0 °C a 8.0 °C.", lastFail: "45 d" },
+            temp_ambiente: { id: "#6725", name: "TEMP AMBIENTE", gaugeTitle: "Ambiente", unit: "°C", value: 21.5, nominalValue: 21.5, min: 0.0, max: 35.0, warnThreshold: 25.0, critThreshold: 28.0, status: "OK", icon: "✓", color: "#10b981", bannerMsg: "Temperatura ambiente óptima (21.5 °C) en Farmacia (Norma: 15 °C a 25 °C).", lastFail: "72 d" },
+            humedad: { id: "#6726", name: "HUMEDAD", gaugeTitle: "Humedad Relativa Ambiente", unit: "%", value: 52.0, nominalValue: 52.0, min: 0.0, max: 100.0, warnThreshold: 65.0, critThreshold: 75.0, status: "OK", icon: "✓", color: "#10b981", bannerMsg: "Humedad relativa en rango seguro (52.0 %) (Norma Res. 1403: 30 % a 65 %).", lastFail: "0 d" }
         };
 
-        let sensors = JSON.parse(localStorage.getItem('prtg_sensors')) || defaultSensors;
-        let currentSensorKey = "temp_ambiente";
+        // AUTO-MIGRACIÓN DE LOCALSTORAGE PARA EVITAR CONTAMINACIÓN DE DATOS VIEJOS
+        let rawStored = localStorage.getItem('prtg_sensors');
+        let sensors;
+        try {
+            sensors = JSON.parse(rawStored);
+            if (!sensors || !sensors.energia || sensors.energia.value > 20 || !sensors.temp_ambiente || sensors.temp_ambiente.nominalValue > 25.0) {
+                sensors = JSON.parse(JSON.stringify(defaultSensors));
+                localStorage.setItem('prtg_sensors', JSON.stringify(sensors));
+            }
+        } catch(e) {
+            sensors = JSON.parse(JSON.stringify(defaultSensors));
+        }
+
+        // GENERADOR DE HISTORIAL REALISTA PARA LAS ÚLTIMAS 24 HORAS
+        function generarPuntoHistoricoRealista(sensorKey, fecha) {
+            const horaDecimal = fecha.getHours() + fecha.getMinutes() / 60;
+            let val = 0;
+
+            if (sensorKey === 'energia') {
+                // 12.35 V continuo con fluctuación microscópica de ripple (12.34 a 12.36 V)
+                const ripple = Math.sin(horaDecimal * Math.PI * 4) * 0.008 + (Math.random() - 0.5) * 0.01;
+                val = 12.35 + ripple;
+            } else if (sensorKey === 'nevera1') {
+                // Ciclo térmico del termostato/compresor (oscila entre 3.8 °C y 5.2 °C cada 45 minutos)
+                const cicloCompresor = Math.sin((fecha.getTime() / (45 * 60 * 1000)) * Math.PI * 2) * 0.65;
+                const ruido = (Math.random() - 0.5) * 0.1;
+                val = 4.5 + cicloCompresor + ruido;
+            } else if (sensorKey === 'temp_ambiente') {
+                // Curva diurna real: más frío a las 5:00 AM (~20.2 °C), más cálido a las 2:00 PM (~22.8 °C)
+                const anguloDiurno = ((horaDecimal - 9) / 24) * Math.PI * 2;
+                const variacionDia = Math.sin(anguloDiurno) * 1.3;
+                const ruido = (Math.random() - 0.5) * 0.2;
+                val = 21.5 + variacionDia + ruido;
+            } else if (sensorKey === 'humedad') {
+                // Humedad inversa a la temperatura (entre 48% a 56%)
+                const anguloDiurno = ((horaDecimal - 9) / 24) * Math.PI * 2;
+                const variacionHumedad = -Math.sin(anguloDiurno) * 3.5;
+                const ruido = (Math.random() - 0.5) * 0.4;
+                val = 52.0 + variacionHumedad + ruido;
+            }
+
+            return parseFloat(val.toFixed(2));
+        }
+
+        // BÚFERES INMUTABLES APPEND-ONLY (HISTÓRICO REAL)
+        function initSensorBuffers() {
+            const now = Date.now();
+            for (let k in sensors) {
+                const s = sensors[k];
+
+                // 1. Buffer 24h (288 intervalos inmutables de 5 min)
+                if (!s.history24h || s.history24h.length !== 288) {
+                    s.history24h = [];
+                    for (let i = 287; i >= 0; i--) {
+                        const t = new Date(now - i * 5 * 60 * 1000);
+                        const valReal = generarPuntoHistoricoRealista(k, t);
+                        s.history24h.push({
+                            timeStr: `${t.toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${t.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`,
+                            timestamp: t.getTime(),
+                            value: valReal,
+                            status: 'OK'
+                        });
+                    }
+                }
+
+                // 2. Buffer Live (50 lecturas inmutables por minuto)
+                if (!s.liveHistory || s.liveHistory.length !== 50) {
+                    s.liveHistory = [];
+                    for (let i = 49; i >= 0; i--) {
+                        const t = new Date(now - i * 60 * 1000);
+                        const valReal = generarPuntoHistoricoRealista(k, t);
+                        s.liveHistory.push({
+                            timeStr: `${t.toLocaleDateString()} ${t.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}`,
+                            shortTime: t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            timestamp: t.getTime(),
+                            value: valReal,
+                            status: 'OK'
+                        });
+                    }
+                }
+            }
+        }
+        initSensorBuffers();
+
+        // REGISTRADOR PUNTUAL: SÓLO MODIFICA EL PRESENTE
+        function registrarLecturaEnBuffers(key, valor, estado) {
+            const s = sensors[key];
+            if(!s) return;
+            const now = new Date();
+            const timeStrLive = `${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}`;
+            const shortTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const timeStr24h = `${now.toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${shortTime}`;
+
+            // Actualizar Live: se añade al final y se remueve el más viejo (los puntos previos no se alteran)
+            s.liveHistory.push({
+                timeStr: timeStrLive,
+                shortTime: shortTime,
+                timestamp: now.getTime(),
+                value: valor,
+                status: estado
+            });
+            if (s.liveHistory.length > 50) s.liveHistory.shift();
+
+            // Actualizar 24h: sustituye únicamente la última casilla del búfer (el presente)
+            const lastIdx = s.history24h.length - 1;
+            s.history24h[lastIdx] = {
+                timeStr: timeStr24h,
+                timestamp: now.getTime(),
+                value: valor,
+                status: estado
+            };
+        }
+
+        let currentSensorKey = "nevera1"; // Inicia por defecto en Nevera 1 para docencia
         let logs = JSON.parse(localStorage.getItem('prtg_logs')) || [];
         let historicalData = JSON.parse(localStorage.getItem('prtg_history')) || [];
         let autoNoiseActive = true;
+        let segEscaneo = 18;
 
-        let liveLabels = ['09:10', '09:11', '09:12', '09:13', '09:14', '09:15', '09:16', '09:17'];
-        let chartLiveInst, chart24hInst, chart10dInst, chart365dInst;
+        let chartLiveInst = null, chart24hInst = null, chart10dInst = null, chart365dInst = null;
 
-        // RELOJ EN VIVO
         function updateClock() {
             const now = new Date();
-            document.getElementById('liveClock').innerText = now.toLocaleString();
+            const el = document.getElementById('liveClock');
+            if(el) el.innerText = now.toLocaleString();
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        // ALERTA SONORA (SINTETIZADOR WEB AUDIO API)
         function playAlertSound(type) {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -438,12 +641,12 @@
                     osc.start();
                     osc.stop(ctx.currentTime + 0.15);
                 }
-            } catch(e) { console.log("Audio no habilitado", e); }
+            } catch(e) {}
         }
 
-        // SISTEMA DE NOTIFICACIONES TOAST (SIMULACIÓN SMS)
         function triggerToast(title, message, type = 'info') {
             const container = document.getElementById('toastContainer');
+            if(!container) return;
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.innerHTML = `
@@ -458,13 +661,13 @@
             }, 4500);
         }
 
-        // DROPDOWN DE SENSORES
         function toggleDropdown() {
-            document.getElementById('sensorDropdown').classList.toggle('show');
+            const el = document.getElementById('sensorDropdown');
+            if(el) el.classList.toggle('show');
         }
 
         window.onclick = function(event) {
-            if (!event.target.matches('.sensor-select-btn') && !event.target.matches('.sensor-select-btn *')) {
+            if (event && !event.target.closest('.sensor-dropdown-container')) {
                 const dropdowns = document.getElementsByClassName("dropdown-menu");
                 for (let i = 0; i < dropdowns.length; i++) dropdowns[i].classList.remove('show');
             }
@@ -473,19 +676,33 @@
         function selectSensor(key) {
             currentSensorKey = key;
             document.querySelectorAll('.dropdown-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            
+            const dropItems = document.querySelectorAll('.dropdown-item');
+            dropItems.forEach(item => {
+                if(item.getAttribute('onclick') && item.getAttribute('onclick').includes(`'${key}'`)) {
+                    item.classList.add('active');
+                }
+            });
 
             updateAllUI();
             
-            if(chartLiveInst) { chartLiveInst.destroy(); chartLiveInst = null; initChartLive(); }
-            if(chart24hInst) { chart24hInst.destroy(); chart24hInst = null; initChart24h(); }
-            if(chart10dInst) { chart10dInst.destroy(); chart10dInst = null; initChart10d(); }
-            if(chart365dInst) { chart365dInst.destroy(); chart365dInst = null; initChart365d(); }
+            if(chartLiveInst) { chartLiveInst.destroy(); chartLiveInst = null; }
+            if(chart24hInst) { chart24hInst.destroy(); chart24hInst = null; }
+            if(chart10dInst) { chart10dInst.destroy(); chart10dInst = null; }
+            if(chart365dInst) { chart365dInst.destroy(); chart365dInst = null; }
+
+            const activeTab = document.querySelector('.tab-content.active');
+            if (activeTab) {
+                if (activeTab.id === 'tab-vivo') initChartLive();
+                else if (activeTab.id === 'tab-24h') initChart24h();
+                else if (activeTab.id === 'tab-10d') initChart10d();
+                else if (activeTab.id === 'tab-365d') initChart365d();
+            }
         }
 
-        // ACTUALIZACIÓN DE INTERFAZ Y ESTADOS
         function updateAllUI() {
             const s = sensors[currentSensorKey];
+            if(!s) return;
 
             document.getElementById('currentSensorName').innerText = s.name;
             document.getElementById('titleSensorName').innerText = s.name;
@@ -518,11 +735,10 @@
 
             alertBanner.innerText = s.bannerMsg;
 
-            // Gauge Dial
             document.getElementById('gaugeTitle').innerText = s.gaugeTitle;
-            document.getElementById('gaugeMinLbl').innerText = `${s.min.toFixed(1)} ${s.unit}`;
-            document.getElementById('gaugeMaxLbl').innerText = `${s.max.toFixed(1)} ${s.unit}`;
-            document.getElementById('gaugeValueDisplay').innerText = `${s.value.toFixed(1)} ${s.unit}`;
+            document.getElementById('gaugeMinLbl').innerText = `${s.min.toFixed(1)} ${s.unit === 'Voltios' ? 'V' : s.unit}`;
+            document.getElementById('gaugeMaxLbl').innerText = `${s.max.toFixed(1)} ${s.unit === 'Voltios' ? 'V' : s.unit}`;
+            document.getElementById('gaugeValueDisplay').innerText = `${s.value.toFixed(2)} ${s.unit}`;
 
             let clampedVal = Math.max(s.min, Math.min(s.max, s.value));
             let pct = (clampedVal - s.min) / (s.max - s.min);
@@ -552,7 +768,7 @@
 
                 const ctrlVal = document.getElementById(`ctrl-val-${k}`);
                 if(ctrlVal) {
-                    ctrlVal.innerText = `${sensors[k].value.toFixed(1)} ${sensors[k].unit}`;
+                    ctrlVal.innerText = `${sensors[k].value.toFixed(2)} ${sensors[k].unit}`;
                     ctrlVal.style.color = sensors[k].status === 'OK' ? '#10b981' : (sensors[k].status === 'WARNING' ? '#f59e0b' : '#ef4444');
                 }
             }
@@ -563,123 +779,251 @@
             document.getElementById('logCount').innerText = logs.length;
         }
 
-        // CONTROL DE SENSORES Y ESCENARIOS
+        // MOTOR DE CORRELACIÓN ENERGÉTICA
+        function recalcularImpactoEnergetico() {
+            if (sensors.energia.value === 0.00 && sensors.energia.status === 'CRITICAL') return;
+
+            let caidaVoltaje = 0;
+            let causas = [];
+
+            if (sensors.nevera1.status === 'CRITICAL') {
+                caidaVoltaje += 0.17;
+                causas.push("Compresor Nevera 100%");
+            } else if (sensors.nevera1.status === 'WARNING') {
+                caidaVoltaje += 0.08;
+                causas.push("Nevera Ciclo Alto");
+            }
+
+            if (sensors.temp_ambiente.status === 'CRITICAL') {
+                caidaVoltaje += 0.27;
+                causas.push("HVAC Climatización Forzada");
+            }
+
+            if (sensors.humedad.status === 'CRITICAL') {
+                caidaVoltaje += 0.15;
+                causas.push("Deshumidificadores");
+            }
+
+            const voltCalculado = parseFloat(Math.max(10.0, 12.35 - caidaVoltaje).toFixed(2));
+            let estadoEnergetico = 'OK';
+            if (voltCalculado < 11.50) estadoEnergetico = 'CRITICAL';
+            else if (voltCalculado < 12.00) estadoEnergetico = 'WARNING';
+
+            const sEnergia = sensors.energia;
+            sEnergia.value = voltCalculado;
+            sEnergia.status = estadoEnergetico;
+            sEnergia.icon = estadoEnergetico === 'OK' ? '✓' : (estadoEnergetico === 'WARNING' ? 'W' : '!');
+
+            if (causas.length > 0) {
+                sEnergia.bannerMsg = `Energia: ${voltCalculado.toFixed(2)} Voltios | Demanda alta por: ${causas.join(' + ')}.`;
+            } else {
+                sEnergia.bannerMsg = `Energia en rango nominal (${voltCalculado.toFixed(2)} Voltios) - Suministro y batería conformes.`;
+            }
+
+            registrarLecturaEnBuffers('energia', voltCalculado, estadoEnergetico);
+        }
+
+        // MODIFICACIÓN DE SENSOR (INMUTABILIDAD: SÓLO REGISTRA EL PRESENTE)
         function modificarSensor(key, nuevoValor, nuevoEstado, silent = false) {
             let s = sensors[key];
+            if(!s) return;
+
             s.value = nuevoValor;
             s.status = nuevoEstado;
             s.icon = nuevoEstado === 'OK' ? '✓' : (nuevoEstado === 'WARNING' ? 'W' : '!');
 
-            if(nuevoEstado === 'OK') s.bannerMsg = `${s.name} operando en parámetros normales (${s.value.toFixed(1)} ${s.unit}).`;
-            else if(nuevoEstado === 'WARNING') s.bannerMsg = `${s.name} (${s.value.toFixed(1)} ${s.unit}) ha superado el límite de advertencia.`;
-            else s.bannerMsg = `¡ALERTA CRÍTICA! ${s.name} registra valores fuera de rango (${s.value.toFixed(1)} ${s.unit}).`;
+            if(nuevoEstado === 'OK') s.bannerMsg = `${s.name} operando en parámetros normales (${s.value.toFixed(2)} ${s.unit}).`;
+            else if(nuevoEstado === 'WARNING') s.bannerMsg = `${s.name} (${s.value.toFixed(2)} ${s.unit}) superó el límite de advertencia.`;
+            else s.bannerMsg = `¡ALERTA CRÍTICA! ${s.name} registra valores fuera de rango (${s.value.toFixed(2)} ${s.unit}).`;
+
+            // REGISTRAR ÚNICAMENTE LA LECTURA ACTUAL (SIN TOCAR EL PASADO)
+            registrarLecturaEnBuffers(key, nuevoValor, nuevoEstado);
+
+            if (key !== 'energia') {
+                recalcularImpactoEnergetico();
+            }
+
+            const fechaHora = `${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+            let detalleEvento = '';
+
+            if (nuevoEstado === 'CRITICAL') {
+                detalleEvento = `🚨 EXCURSIÓN: ${s.name} alcanzó ${nuevoValor.toFixed(2)} ${s.unit}. Requiere cuarentena preventiva del lote.`;
+            } else if (nuevoEstado === 'WARNING') {
+                detalleEvento = `⚠️ ADVERTENCIA: ${s.name} registró ${nuevoValor.toFixed(2)} ${s.unit}. Verificación preventiva.`;
+            } else {
+                detalleEvento = `✅ NORMALIZADO: ${s.name} regresó a ${nuevoValor.toFixed(2)} ${s.unit}. Restablecimiento registrado.`;
+            }
+
+            historicalData.unshift({
+                time: fechaHora,
+                sensor: s.name,
+                value: `${nuevoValor.toFixed(2)} ${s.unit}`,
+                status: nuevoEstado,
+                detalle: detalleEvento
+            });
 
             addLog(s.name, nuevoEstado, s.bannerMsg);
 
             if(!silent) {
                 playAlertSound(nuevoEstado);
                 if(nuevoEstado !== 'OK') {
-                    triggerToast(`[SMS -> Regente]: Alerta ${s.name}`, s.bannerMsg, nuevoEstado.toLowerCase());
+                    triggerToast(`[Alerta Sanitaria]: ${s.name}`, s.bannerMsg, nuevoEstado.toLowerCase());
                 }
             }
             
-            if(currentSensorKey === key) updateAllUI();
-            else updateGlobalBadges();
+            updateAllUI();
+            updateGlobalBadges();
 
-            if(chartLiveInst && currentSensorKey === key) {
-                chartLiveInst.data.datasets[0].data.push(s.value);
-                chartLiveInst.data.datasets[0].data.shift();
-                chartLiveInst.update();
-            }
+            const activeTab = document.querySelector('.tab-content.active');
+            if (activeTab && activeTab.id === 'tab-24h') initChart24h();
+            else if (activeTab && activeTab.id === 'tab-vivo') {
+                initChartLive();
+                updateLiveTable();
+            } else if (activeTab && activeTab.id === 'tab-historico') renderHistoricalTable();
         }
 
-        // MACROS PREDISEÑADAS DE ENSEÑANZA
+        // ESCENARIOS NORMATIVOS
         function ejecutarMacro(escenario) {
             if(escenario === 'normal') {
-                modificarSensor('energia', 115, 'OK', true);
-                modificarSensor('nevera1', 4.2, 'OK', true);
-                modificarSensor('temp_ambiente', 22.0, 'OK', true);
-                modificarSensor('humedad', 55.0, 'OK', true);
-                triggerToast('Sistema Restablecido', 'Todas las variables retornaron a parámetros nominales.', 'info');
-            } else if(escenario === 'apagon') {
-                modificarSensor('energia', 0, 'CRITICAL');
-                modificarSensor('nevera1', 13.5, 'CRITICAL');
-                modificarSensor('temp_ambiente', 28.5, 'CRITICAL');
-                triggerToast('EMERGENCIA: Apagón', 'Corte eléctrico general. Temperatura en aumento.', 'danger');
+                modificarSensor('nevera1', 4.5, 'OK', true);
+                modificarSensor('temp_ambiente', 21.5, 'OK', true);
+                modificarSensor('humedad', 52.0, 'OK', true);
+                sensors.energia.value = 12.35;
+                sensors.energia.status = 'OK';
+                recalcularImpactoEnergetico();
+                triggerToast('Sistema Conforme', 'Energia nominal (12.35 V), refrigeración (4.5 °C) y ambiente conformes.', 'info');
+
             } else if(escenario === 'nevera_abierta') {
-                modificarSensor('nevera1', 12.8, 'CRITICAL');
-                triggerToast('ALERTA: Nevera 1', 'Fuga de frío detectada en Nevera de Medicamentos.', 'danger');
+                modificarSensor('nevera1', 13.2, 'CRITICAL', false);
+                modificarSensor('humedad', 56.5, 'OK', true);
+                triggerToast('ALERTA: Nevera Abierta', 'Temperatura a 13.2°C y caída a 12.18 V por compresión forzada.', 'danger');
+
+            } else if(escenario === 'termostato_pegado') {
+                modificarSensor('nevera1', -1.0, 'CRITICAL', false);
+                triggerToast('CRÍTICO: Congelamiento (-1°C)', 'Pérdida irreversible de vacunas e insulinas.', 'danger');
+
+            } else if(escenario === 'falla_hvac') {
+                modificarSensor('temp_ambiente', 29.2, 'CRITICAL', false);
+                modificarSensor('humedad', 68.0, 'WARNING', true);
+                triggerToast('ALERTA: Calor en Bodega (29°C)', 'Compresor forzado: voltaje cae a 12.08 V.', 'danger');
+
             } else if(escenario === 'lluvia') {
-                modificarSensor('humedad', 88.0, 'CRITICAL');
-                triggerToast('ALERTA: Humedad', 'Exceso de humedad relativa ambiental por lluvia.', 'danger');
+                modificarSensor('humedad', 88.0, 'CRITICAL', false);
+                triggerToast('ALERTA: Humedad Crítica (88%)', 'Deshumidificadores al 100%: voltaje cae a 12.12 V.', 'danger');
+
+            } else if(escenario === 'apagon') {
+                modificarSensor('energia', 0.00, 'CRITICAL', false);
+                modificarSensor('nevera1', 13.5, 'CRITICAL', true);
+                modificarSensor('temp_ambiente', 28.0, 'CRITICAL', true);
+                triggerToast('EMERGENCIA: Apagón General (0.00 V)', 'Corte total del suministro. Activación de contingencia.', 'danger');
+
+            } else if(escenario === 'bateria_baja') {
+                modificarSensor('energia', 11.80, 'WARNING', false);
+                triggerToast('Batería Baja (11.80 V)', 'Descarga del banco de respaldo de la sonda IoT.', 'warning');
             }
         }
 
-        // AUTO-FLUCTUACIÓN EN TIEMPO REAL
+        function limpiarTodoHistorial() {
+            localStorage.removeItem('prtg_sensors');
+            localStorage.removeItem('prtg_logs');
+            localStorage.removeItem('prtg_history');
+            sensors = JSON.parse(JSON.stringify(defaultSensors));
+            initSensorBuffers();
+            logs = [];
+            historicalData = [];
+            ejecutarMacro('normal');
+            triggerToast('Historial Limpio', 'Memoria restablecida por completo al estado inicial con 24h realistas.', 'info');
+            if (chart24hInst) initChart24h();
+            if (chartLiveInst) { initChartLive(); updateLiveTable(); }
+        }
+
+        // FLUCTUACIÓN AUTOMÁTICA EN TIEMPO REAL (AÑADE LECTURA CADA 3 SEG SIN TOCAR EL PASADO)
         setInterval(() => {
+            segEscaneo = (segEscaneo + 1) % 60;
+            const scanEl = document.getElementById('scanTimer');
+            if(scanEl) scanEl.innerText = segEscaneo;
+
             if(!autoNoiseActive) return;
             
             for(let key in sensors) {
                 let s = sensors[key];
                 if(s.status === 'OK') {
-                    // Pequeña fluctuación realista (+/- 0.1 o 0.2)
-                    let delta = (Math.random() - 0.5) * 0.2;
+                    const delta = (key === 'energia') ? ((Math.random() - 0.5) * 0.015) : ((Math.random() - 0.5) * 0.12);
                     s.value = Math.max(s.min, Math.min(s.max, s.value + delta));
+                    registrarLecturaEnBuffers(key, s.value, s.status);
                 }
             }
 
             const current = sensors[currentSensorKey];
-            document.getElementById('gaugeValueDisplay').innerText = `${current.value.toFixed(1)} ${current.unit}`;
-            
-            // Actualizar la aguja
-            let clampedVal = Math.max(current.min, Math.min(current.max, current.value));
-            let pct = (clampedVal - current.min) / (current.max - current.min);
-            let deg = -90 + (pct * 180);
-            document.getElementById('needle').style.transform = `rotate(${deg}deg)`;
+            if(current) {
+                const gDisp = document.getElementById('gaugeValueDisplay');
+                if(gDisp) gDisp.innerText = `${current.value.toFixed(2)} ${current.unit}`;
+                
+                let clampedVal = Math.max(current.min, Math.min(current.max, current.value));
+                let pct = (clampedVal - current.min) / (current.max - current.min);
+                let deg = -90 + (pct * 180);
+                const needle = document.getElementById('needle');
+                if(needle) needle.style.transform = `rotate(${deg}deg)`;
 
-            // Push a gráfica en vivo
-            if(chartLiveInst) {
-                chartLiveInst.data.datasets[0].data.push(current.value);
-                chartLiveInst.data.datasets[0].data.shift();
-                chartLiveInst.update('none'); // Update suave sin animación pesada
+                const tabVivo = document.getElementById('tab-vivo');
+                if(chartLiveInst && tabVivo && tabVivo.classList.contains('active')) {
+                    initChartLive();
+                    updateLiveTable();
+                }
             }
         }, 3000);
 
         function toggleAutoNoise() {
-            autoNoiseActive = document.getElementById('autoNoiseToggle').checked;
+            const el = document.getElementById('autoNoiseToggle');
+            if(el) autoNoiseActive = el.checked;
         }
 
-        // AGREGAR LOGS Y AUDITORÍA
         function addLog(sensorName, level, message) {
             const timeStr = new Date().toLocaleTimeString();
             const dateStr = new Date().toLocaleDateString();
-            
             logs.unshift({ time: `${dateStr} ${timeStr}`, sensor: sensorName, level, message });
-            historicalData.unshift({ time: `${dateStr} ${timeStr}`, sensor: sensorName, value: `${sensors[currentSensorKey].value.toFixed(1)} ${sensors[currentSensorKey].unit}`, status: level });
-
             if(logs.length > 100) logs.pop();
-            if(historicalData.length > 100) historicalData.pop();
-
             renderLogs();
             saveState();
         }
 
         function renderLogs() {
-            const filter = document.getElementById('logFilter') ? document.getElementById('logFilter').value : 'ALL';
+            const filterEl = document.getElementById('logFilter');
+            const filter = filterEl ? filterEl.value : 'ALL';
 
-            document.getElementById('miniLogTable').innerHTML = logs.slice(0, 5).map(l => `
-                <tr><td>${l.time.split(' ')[1]}</td><td><b>${l.sensor}</b></td><td><span class="status-icon icon-${l.level === 'OK' ? 'green' : (l.level === 'WARNING' ? 'yellow' : 'red')}">${l.level === 'OK' ? '✓' : (l.level === 'WARNING' ? 'W' : '!')}</span></td><td>${l.message}</td></tr>
-            `).join('');
+            const miniTable = document.getElementById('miniLogTable');
+            if(miniTable) {
+                miniTable.innerHTML = logs.slice(0, 5).map(l => `
+                    <tr><td>${l.time.split(' ')[1]}</td><td><b>${l.sensor}</b></td><td><span class="status-icon icon-${l.level === 'OK' ? 'green' : (l.level === 'WARNING' ? 'yellow' : 'red')}">${l.level === 'OK' ? '✓' : (l.level === 'WARNING' ? 'W' : '!')}</span></td><td>${l.message}</td></tr>
+                `).join('');
+            }
 
             const filteredLogs = logs.filter(l => filter === 'ALL' || l.level === filter);
+            const fullTable = document.getElementById('fullLogTable');
+            if(fullTable) {
+                fullTable.innerHTML = filteredLogs.map(l => `
+                    <tr><td>${l.time}</td><td><b>${l.sensor}</b></td><td><b>${l.level}</b></td><td>${l.message}</td></tr>
+                `).join('');
+            }
 
-            document.getElementById('fullLogTable').innerHTML = filteredLogs.map(l => `
-                <tr><td>${l.time}</td><td><b>${l.sensor}</b></td><td><b>${l.level}</b></td><td>${l.message}</td></tr>
-            `).join('');
+            renderHistoricalTable();
+        }
 
-            document.getElementById('tableHistorical').innerHTML = historicalData.map(h => `
-                <tr><td>${h.time}</td><td>${h.sensor}</td><td><b>${h.value}</b></td><td>${h.status}</td></tr>
-            `).join('');
+        function renderHistoricalTable() {
+            const histTable = document.getElementById('tableHistorical');
+            if(!histTable) return;
+            histTable.innerHTML = historicalData.map(h => {
+                const colorBadge = h.status === 'OK' ? '#10b981' : (h.status === 'WARNING' ? '#f59e0b' : '#ef4444');
+                return `
+                    <tr>
+                        <td>${h.time}</td>
+                        <td><b>${h.sensor}</b></td>
+                        <td><strong style="color:${colorBadge};">${h.value}</strong></td>
+                        <td><span class="status-icon icon-${h.status === 'OK' ? 'green' : (h.status === 'WARNING' ? 'yellow' : 'red')}">${h.status === 'OK' ? '✓' : (h.status === 'WARNING' ? 'W' : '!')}</span> ${h.status}</td>
+                        <td>${h.detalle || 'Monitoreo programado'}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function saveState() {
@@ -688,18 +1032,21 @@
             localStorage.setItem('prtg_history', JSON.stringify(historicalData));
         }
 
-        // PESTAÑAS
         function switchTab(tabId, tabEl) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             
-            document.getElementById(tabId).classList.add('active');
-            tabEl.classList.add('active');
+            const target = document.getElementById(tabId);
+            if(target) target.classList.add('active');
+            if(tabEl) tabEl.classList.add('active');
 
-            if(tabId === 'tab-vivo') initChartLive();
-            if(tabId === 'tab-24h') initChart24h();
-            if(tabId === 'tab-10d') initChart10d();
-            if(tabId === 'tab-365d') initChart365d();
+            setTimeout(() => {
+                if(tabId === 'tab-vivo') { initChartLive(); updateLiveTable(); }
+                if(tabId === 'tab-24h') initChart24h();
+                if(tabId === 'tab-10d') initChart10d();
+                if(tabId === 'tab-365d') initChart365d();
+                if(tabId === 'tab-historico') renderHistoricalTable();
+            }, 50);
         }
 
         function guardarConfiguracion() {
@@ -714,91 +1061,308 @@
         }
 
         function exportarCSV() {
-            let csv = "Fecha,Sensor,Valor,Estado\n";
-            historicalData.forEach(r => { csv += `"${r.time}","${r.sensor}","${r.value}","${r.status}"\n`; });
+            let csv = "Fecha_Hora,Sensor,Valor,Estado,Detalle_Tecnico\n";
+            historicalData.forEach(r => { 
+                csv += `"${r.time}","${r.sensor}","${r.value}","${r.status}","${r.detalle || ''}"\n`; 
+            });
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.setAttribute('href', url);
-            a.setAttribute('download', `reporte_${currentSensorKey}_PRTG.csv`);
+            a.setAttribute('download', `reporte_auditoria_SENA_${currentSensorKey}.csv`);
             a.click();
         }
 
-        // GRÁFICAS DE CHART.JS
+        // PESTAÑA: DATOS EN VIVO (BÚFER INMUTABLE)
         function initChartLive() {
-            if(chartLiveInst) return;
+            if(chartLiveInst) { chartLiveInst.destroy(); chartLiveInst = null; }
             const s = sensors[currentSensorKey];
-            const ctx = document.getElementById('chartLive').getContext('2d');
+            const canvas = document.getElementById('chartLive');
+            if(!canvas || !s.liveHistory) return;
+
+            const labels = s.liveHistory.map(p => p.shortTime);
+            const dataPoints = s.liveHistory.map(p => p.value);
+
+            const ctx = canvas.getContext('2d');
             chartLiveInst = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: liveLabels,
-                    datasets: [{ label: `${s.name} (${s.unit})`, data: [...s.liveData], borderColor: s.color, backgroundColor: 'rgba(2,132,199,0.1)', fill: true, tension: 0.3 }]
+                    labels: labels,
+                    datasets: [{
+                        label: `${s.name} (${s.unit})`,
+                        data: dataPoints,
+                        borderColor: s.status === 'OK' ? '#0284c7' : s.color,
+                        backgroundColor: 'rgba(2, 132, 199, 0.08)',
+                        fill: true,
+                        tension: 0.2,
+                        borderWidth: 1.5,
+                        pointRadius: 0
+                    }]
                 },
-                options: { responsive: true, animation: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    scales: {
+                        y: {
+                            min: (s.name === 'Energia' && s.value > 10.0) ? 12.00 : undefined,
+                            max: (s.name === 'Energia' && s.value > 10.0) ? 13.00 : undefined,
+                            ticks: {
+                                stepSize: (s.name === 'Energia') ? 0.10 : undefined,
+                                callback: function(val) { return Number(val).toFixed(2); }
+                            }
+                        }
+                    }
+                }
             });
         }
 
-        function initChart24h() {
-            if(chart24hInst) return;
+        function updateLiveTable() {
             const s = sensors[currentSensorKey];
-            const hours = Array.from({length: 24}, (_, i) => `${i}:00`);
-            const mockData = hours.map((_, i) => (s.value + (Math.sin(i / 2) * (s.max - s.min) * 0.05)).toFixed(1));
+            const tbody = document.getElementById('tableLiveRows');
+            if(!tbody || !s || !s.liveHistory) return;
+
+            const list = [...s.liveHistory].reverse();
+            let filas = '';
+            list.slice(0, 20).forEach(item => {
+                filas += `
+                    <tr>
+                        <td>${item.timeStr}</td>
+                        <td><b>${item.value.toFixed(2)} ${s.unit}</b></td>
+                        <td>${item.status === 'CRITICAL' && s.name === 'Energia' ? '100 %' : '0 %'}</td>
+                        <td>100 %</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = filas;
+
+            const avgLiveEl = document.getElementById('avgLiveDisplay');
+            if(avgLiveEl) {
+                const sum = list.reduce((acc, p) => acc + p.value, 0);
+                const avg = (sum / (list.length || 1)).toFixed(2);
+                avgLiveEl.innerText = `${avg} ${s.unit}`;
+            }
+        }
+
+        // PESTAÑA: 24 HORAS CON 288 PUNTOS REALISTAS
+        function initChart24h() {
+            const canvas = document.getElementById('chart24h');
+            if (!canvas) return;
+
+            if (chart24hInst) {
+                chart24hInst.destroy();
+                chart24hInst = null;
+            }
+
+            const s = sensors[currentSensorKey];
+            const buffer = s.history24h || [];
+
+            const labels = [];
+            const chartData = [];
+            const pointColors = [];
+            const pointRadii = [];
+            let suma = 0;
+            let incidentesCriticos = 0;
+            let incidentesWarning = 0;
+
+            for (let i = 0; i < buffer.length; i++) {
+                const item = buffer[i];
+                labels.push(item.timeStr);
+                chartData.push(item.value);
+                suma += item.value;
+
+                if (item.status === 'CRITICAL') {
+                    incidentesCriticos++;
+                    pointColors.push('#ef4444');
+                    pointRadii.push(3.5);
+                } else if (item.status === 'WARNING') {
+                    incidentesWarning++;
+                    pointColors.push('#f59e0b');
+                    pointRadii.push(2.5);
+                } else {
+                    pointColors.push('#0284c7');
+                    pointRadii.push(0);
+                }
+            }
+
+            const promedio24h = (suma / (buffer.length || 1)).toFixed(2);
+            document.getElementById('avg24hDisplay').innerText = `${promedio24h} ${s.unit}`;
             
-            const ctx = document.getElementById('chart24h').getContext('2d');
+            const noticeBox = document.getElementById('incidentNoticeBox');
+            if (incidentesCriticos > 0) {
+                noticeBox.className = 'incident-report-box';
+                noticeBox.innerHTML = `<strong>🚨 EXCURSIÓN CRÍTICA DETECTADA:</strong> Se registraron ${incidentesCriticos} intervalos fuera de límites en las últimas 24 horas. Verifique el impacto en la estabilidad de los medicamentos.`;
+                document.getElementById('inactividad24h').innerText = ((incidentesCriticos / 288) * 100).toFixed(1) + ' %';
+            } else if (incidentesWarning > 0) {
+                noticeBox.className = 'incident-report-box';
+                noticeBox.style.backgroundColor = '#fffbeb';
+                noticeBox.style.borderColor = '#f59e0b';
+                noticeBox.style.color = '#b45309';
+                noticeBox.innerHTML = `<strong>⚠️ ALERTA OPERATIVA:</strong> Se registraron ${incidentesWarning} intervalos en zona de advertencia.`;
+                document.getElementById('inactividad24h').innerText = '0 %';
+            } else {
+                noticeBox.className = 'incident-report-box clean';
+                noticeBox.innerHTML = `<strong>✅ PARÁMETROS EN REGLA:</strong> Monitoreo continuo 100% conforme a la Resolución 1403/2007. No se detectaron excursiones en este sensor.`;
+                document.getElementById('inactividad24h').innerText = '0 %';
+            }
+
+            const tbody = document.getElementById('table24hRows');
+            if (tbody) {
+                let filas = '';
+                const reversedBuffer = [...buffer].reverse();
+                for (let j = 0; j < Math.min(48, reversedBuffer.length); j++) {
+                    const item = reversedBuffer[j];
+                    const colorVal = item.status === 'OK' ? '#10b981' : (item.status === 'WARNING' ? '#f59e0b' : '#ef4444');
+                    const badgeText = item.status === 'OK' ? '✓ OK' : (item.status === 'WARNING' ? '⚠️ Advertencia' : '🚨 CRÍTICO');
+
+                    filas += `
+                        <tr style="${item.status !== 'OK' ? 'background-color: #fef2f2;' : ''}">
+                            <td>${item.timeStr}</td>
+                            <td><strong style="color:${colorVal};">${item.value.toFixed(2)} ${s.unit}</strong></td>
+                            <td><b style="color:${colorVal};">${badgeText}</b></td>
+                            <td>${item.status === 'CRITICAL' && s.name === 'Energia' ? '100 %' : '0 %'}</td>
+                            <td>100 %</td>
+                        </tr>
+                    `;
+                }
+                tbody.innerHTML = filas;
+            }
+
+            const ctx = canvas.getContext('2d');
             chart24hInst = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: hours,
-                    datasets: [{ label: `Lectura 24h - ${s.name} (${s.unit})`, data: mockData, borderColor: '#f59e0b', fill: false }]
+                    labels: labels,
+                    datasets: [{
+                        label: `Histórico 24h - ${s.name} (${s.unit})`,
+                        data: chartData,
+                        borderColor: (incidentesCriticos > 0) ? '#ef4444' : (incidentesWarning > 0 ? '#f59e0b' : '#0284c7'),
+                        backgroundColor: (incidentesCriticos > 0) ? 'rgba(239, 68, 68, 0.08)' : 'rgba(2, 132, 199, 0.08)',
+                        fill: true,
+                        tension: 0.25,
+                        borderWidth: 1.8,
+                        pointRadius: pointRadii,
+                        pointBackgroundColor: pointColors,
+                        pointBorderColor: pointColors,
+                        pointHoverRadius: 6
+                    }]
                 },
-                options: { responsive: true }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: (s.name === 'Energia' && incidentesCriticos === 0) ? 12.00 : undefined,
+                            max: (s.name === 'Energia' && incidentesCriticos === 0) ? 13.00 : undefined,
+                            ticks: {
+                                stepSize: (s.name === 'Energia') ? 0.10 : undefined,
+                                callback: function(val) { return Number(val).toFixed(2); }
+                            }
+                        },
+                        x: {
+                            ticks: { maxTicksLimit: 12, autoSkip: true }
+                        }
+                    }
+                }
             });
         }
 
+        // HISTÓRICO 10 DÍAS
         function initChart10d() {
-            if(chart10dInst) return;
+            if(chart10dInst) { chart10dInst.destroy(); chart10dInst = null; }
             const s = sensors[currentSensorKey];
-            const days = ['Día 1', 'Día 2', 'Día 3', 'Día 4', 'Día 5', 'Día 6', 'Día 7', 'Día 8', 'Día 9', 'Día 10'];
-            const mockData = days.map(() => (s.value + (Math.random() - 0.5) * 2).toFixed(1));
+            const canvas = document.getElementById('chart10d');
+            if(!canvas) return;
 
-            const ctx = document.getElementById('chart10d').getContext('2d');
+            const days = [];
+            const mockData = [];
+            const ahora = new Date();
+
+            for (let i = 9; i >= 0; i--) {
+                const d = new Date(ahora.getTime() - i * 86400000);
+                const diaMes = d.toLocaleDateString([], { day: '2-digit', month: 'short' });
+                days.push(i === 0 ? `${diaMes} (Hoy)` : diaMes);
+
+                let baseDay = (i === 0 && s.status !== 'OK') 
+                    ? (Number(s.nominalValue) * 0.6 + Number(s.value) * 0.4)
+                    : Number(s.nominalValue);
+
+                const val = parseFloat((baseDay + (Math.sin(i) * 0.01) + (Math.random() - 0.5) * 0.02).toFixed(2));
+                mockData.push(val);
+            }
+
+            const ctx = canvas.getContext('2d');
             chart10dInst = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: days,
-                    datasets: [{ label: `Promedio 10 Días (${s.unit})`, data: mockData, backgroundColor: '#3b82f6' }]
+                    datasets: [{ label: `Promedio Diario (${s.unit})`, data: mockData, backgroundColor: '#0284c7' }]
                 },
-                options: { responsive: true }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: (s.name === 'Energia') ? 12.00 : undefined,
+                            max: (s.name === 'Energia') ? 13.00 : undefined
+                        }
+                    }
+                }
             });
         }
 
+        // HISTÓRICO ANUAL
         function initChart365d() {
-            if(chart365dInst) return;
+            if(chart365dInst) { chart365dInst.destroy(); chart365dInst = null; }
             const s = sensors[currentSensorKey];
-            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            const mockData = months.map(() => (s.value + (Math.random() - 0.5) * 3).toFixed(1));
+            const canvas = document.getElementById('chart365d');
+            if(!canvas) return;
 
-            const ctx = document.getElementById('chart365d').getContext('2d');
+            const months = [];
+            const mockData = [];
+            const ahora = new Date();
+
+            for (let i = 11; i >= 0; i--) {
+                const d = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+                const mesAnio = d.toLocaleDateString([], { month: 'short', year: '2-digit' });
+                months.push(i === 0 ? `${mesAnio} (Actual)` : mesAnio);
+
+                let baseMonth = (i === 0 && s.status !== 'OK') 
+                    ? (Number(s.nominalValue) * 0.85 + Number(s.value) * 0.15)
+                    : Number(s.nominalValue);
+
+                const val = parseFloat((baseMonth + (Math.sin(i / 2) * 0.01) + (Math.random() - 0.5) * 0.02).toFixed(2));
+                mockData.push(val);
+            }
+
+            const ctx = canvas.getContext('2d');
             chart365dInst = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: months,
-                    datasets: [{ label: `Consolidado Anual (${s.unit})`, data: mockData, borderColor: '#10b981', tension: 0.2 }]
+                    datasets: [{ label: `Consolidado Mensual (${s.unit})`, data: mockData, borderColor: '#0284c7', backgroundColor: 'rgba(2, 132, 199, 0.1)', fill: true, tension: 0.25 }]
                 },
-                options: { responsive: true }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: (s.name === 'Energia') ? 12.00 : undefined,
+                            max: (s.name === 'Energia') ? 13.00 : undefined
+                        }
+                    }
+                }
             });
         }
 
-        // INICIALIZACIÓN
-        if(logs.length === 0) {
-            addLog("SISTEMA", "OK", "Servidor de Monitoreo PRTG iniciado correctamente.");
-            addLog("HUMEDAD", "CRITICAL", "78.5 % superó el límite máximo seguro (75.0 %).");
-            addLog("TEMP AMBIENTE", "WARNING", "25.3 °C superó el límite de advertencia (25.0 °C).");
-        }
-
-        updateAllUI();
-        renderLogs();
+        window.addEventListener('DOMContentLoaded', () => {
+            if(logs.length === 0) {
+                addLog("SISTEMA", "OK", "Servidor PRTG SENA iniciado: Monitoreo normativo Res. 1403/2007 activo.");
+            }
+            updateAllUI();
+            renderLogs();
+            initChart24h();
+        });
     </script>
 </body>
 </html>
