@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paessler PRTG - Simulador Multisensor IoT SENA</title>
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #f3f3f3; color: #333; font-size: 13px; }
+
+        /* Barra Superior PRTG Dark Header */
+        .header { background-color: #333333; color: #fff; padding: 6px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+        .breadcrumb { display: flex; align-items: center; gap: 5px; color: #ccc; }
+        .breadcrumb span { color: #fff; font-weight: bold; }
+
+        /* Badges de Estado PRTG (Top Right) */
+        .prtg-badges { display: flex; align-items: center; gap: 6px; }
+        .badge-item { padding: 2px 8px; border-radius: 3px; font-weight: bold; font-size: 11px; color: #fff; }
+        .badge-log { background: #555; font-weight: normal; }
+        .badge-red { background: #ef4444; }
+        .badge-yellow { background: #f59e0b; }
+        .badge-green { background: #10b981; }
+
+        /* Dropdown Selector de Sensor en el Breadcrumb */
+        .sensor-dropdown-container { position: relative; display: inline-block; }
+        .sensor-select-btn { background: #444; color: #fff; padding: 4px 10px; border-radius: 3px; border: 1px solid #666; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 12px; }
+        .sensor-select-btn:hover { background: #555; }
+        
+        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; background-color: #ffffff; min-width: 220px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1000; border-radius: 4px; border: 1px solid #ccc; margin-top: 4px; }
+        .dropdown-menu.show { display: block; }
+        .dropdown-item { padding: 10px 14px; color: #333; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-weight: 500; font-size: 12px; }
+        .dropdown-item:hover { background-color: #f1f5f9; }
+        .dropdown-item.active { background-color: #e0f2fe; font-weight: bold; }
+        
+        .status-icon { width: 18px; height: 18px; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #fff; }
+        .icon-green { background: #10b981; }
+        .icon-yellow { background: #f59e0b; }
+        .icon-red { background: #ef4444; }
+
+        /* Title Bar & Warning Banner */
+        .sensor-title-bar { background-color: #d97706; color: #fff; padding: 10px 20px; font-size: 17px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: background 0.3s; }
+        .alert-banner { background-color: #f59e0b; color: #fff; padding: 10px 20px; font-size: 13px; font-weight: 600; border-bottom: 1px solid rgba(0,0,0,0.1); transition: background 0.3s; }
+
+        /* Pestañas */
+        .tabs { display: flex; background-color: #e5e5e5; border-bottom: 2px solid #ccc; padding-left: 15px; }
+        .tab { padding: 10px 16px; font-size: 13px; color: #555; cursor: pointer; border-right: 1px solid #ddd; font-weight: 500; user-select: none; }
+        .tab:hover { background-color: #ebebeb; }
+        .tab.active { background-color: #fff; color: #000; font-weight: bold; border-top: 3px solid #0284c7; border-bottom: 2px solid #fff; margin-bottom: -2px; }
+
+        /* Contenedores de Contenido */
+        .main-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Tarjetas y Rejillas */
+        .card { background: #fff; border: 1px solid #ccc; border-radius: 4px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card h3 { font-size: 14px; color: #444; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; font-size: 12px; }
+        .info-item div { color: #666; font-size: 11px; }
+        .info-item strong { color: #111; font-size: 13px; }
+
+        /* Gauge (Manómetro) */
+        .gauge-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 10px; }
+        .gauge-container { width: 260px; height: 130px; position: relative; overflow: hidden; }
+        .gauge-bg { width: 260px; height: 260px; border-radius: 50%; background: conic-gradient(from 270deg, #3b82f6 0deg 45deg, #10b981 45deg 120deg, #f59e0b 120deg 150deg, #ef4444 150deg 180deg, transparent 180deg); position: absolute; top: 0; left: 0; }
+        .gauge-inner { width: 180px; height: 180px; background: #fff; border-radius: 50%; position: absolute; top: 40px; left: 40px; }
+        .needle { width: 4px; height: 100px; background: #222; position: absolute; bottom: 0; left: 128px; transform-origin: bottom center; transform: rotate(-90deg); transition: transform 0.4s ease-out; }
+        .needle-pivot { width: 14px; height: 14px; background: #222; border-radius: 50%; position: absolute; bottom: -7px; left: 123px; }
+        .gauge-reading { font-size: 26px; font-weight: bold; margin-top: 10px; color: #111; }
+
+        /* Tablas */
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8fafc; color: #475569; font-weight: 600; }
+        tr:hover { background-color: #f1f5f9; }
+
+        /* Formularios y Botones */
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; font-weight: bold; color: #444; }
+        .form-group input { width: 100%; max-width: 400px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn { padding: 7px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; background: #0284c7; color: #fff; font-size: 12px; }
+        .btn:hover { background: #0369a1; }
+
+        /* Panel Instructor Multidispositivo */
+        .instructor-panel { background: #0f172a; color: #fff; padding: 18px; border-radius: 6px; margin-top: 25px; border-left: 6px solid #38bdf8; }
+        .instructor-panel h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+        .sensor-control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 10px; }
+        .sensor-card-ctrl { background: #1e293b; padding: 12px; border-radius: 6px; border: 1px solid #334155; }
+        .sensor-card-ctrl h5 { font-size: 13px; color: #f8fafc; margin-bottom: 6px; display: flex; justify-content: space-between; }
+        .btn-sim { padding: 5px 8px; margin-right: 4px; margin-top: 5px; border: none; border-radius: 3px; font-weight: bold; cursor: pointer; color: #fff; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+    <!-- Header Superior PRTG -->
+    <div class="header">
+        <div class="breadcrumb">
+            Dispositivos > Sonda local > IOT > CLIENTES SENA > FARMACIA (SENA) > FARMACIA > 
+            <div class="sensor-dropdown-container">
+                <button class="sensor-select-btn" onclick="toggleDropdown()">
+                    <span id="currentSensorIcon" class="status-icon icon-yellow">W</span>
+                    <span id="currentSensorName">TEMP AMBIENTE</span> ▼
+                </button>
+                <div class="dropdown-menu" id="sensorDropdown">
+                    <div class="dropdown-item" onclick="selectSensor('energia')">
+                        <span class="status-icon icon-green" id="drop-icon-energia">✓</span> Energía
+                    </div>
+                    <div class="dropdown-item" onclick="selectSensor('nevera1')">
+                        <span class="status-icon icon-green" id="drop-icon-nevera1">✓</span> Nevera 1
+                    </div>
+                    <div class="dropdown-item active" onclick="selectSensor('temp_ambiente')">
+                        <span class="status-icon icon-yellow" id="drop-icon-temp_ambiente">W</span> TEMP AMBIENTE
+                    </div>
+                    <div class="dropdown-item" onclick="selectSensor('humedad')">
+                        <span class="status-icon icon-red" id="drop-icon-humedad">!</span> HUMEDAD
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Badges de Estado Globales -->
+        <div class="prtg-badges">
+            <span class="badge-item badge-log">Nuevas entradas de log: 17</span>
+            <span class="badge-item badge-red" id="globalBadgeRed">! 1</span>
+            <span class="badge-item badge-yellow" id="globalBadgeYellow">W 1</span>
+            <span class="badge-item badge-green" id="globalBadgeGreen">✓ 2</span>
+        </div>
+    </div>
+
+    <!-- Title Bar del Sensor -->
+    <div class="sensor-title-bar" id="titleBar">
+        <span><span id="titleIcon">W</span> Sensor <span id="titleSensorName">TEMP AMBIENTE</span></span>
+        <span style="font-size:12px; font-weight:normal;">Estado: <b id="statusBadge">ADVERTENCIA</b></span>
+    </div>
+
+    <!-- Alert Banner -->
+    <div class="alert-banner" id="alertBanner">
+        Cargando monitoreo de variables de farmacia...
+    </div>
+
+    <!-- Pestañas PRTG -->
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('tab-resumen', this)">Resumen</div>
+        <div class="tab" onclick="switchTab('tab-vivo', this)">Datos en vivo</div>
+        <div class="tab" onclick="switchTab('tab-24h', this)">24 horas</div>
+        <div class="tab" onclick="switchTab('tab-10d', this)">10 días</div>
+        <div class="tab" onclick="switchTab('tab-365d', this)">365 días</div>
+        <div class="tab" onclick="switchTab('tab-historico', this)">Datos históricos</div>
+        <div class="tab" onclick="switchTab('tab-log', this)">Log</div>
+        <div class="tab" onclick="switchTab('tab-config', this)">Configuración</div>
+    </div>
+
+    <div class="main-container">
+
+        <!-- 1. PESTAÑA RESUMEN -->
+        <div id="tab-resumen" class="tab-content active">
+            <div class="info-grid card">
+                <div class="info-item"><div>Último escaneo:</div><strong><span id="scanTimer">83</span> s</strong></div>
+                <div class="info-item"><div>Último OK:</div><strong><span id="lastOkTime">83</span> s</strong></div>
+                <div class="info-item"><div>Último fallo:</div><strong><span id="lastFailTime">72 d</span></strong></div>
+                <div class="info-item"><div>Tiempo de inactividad:</div><strong>0.1362%</strong></div>
+                <div class="info-item"><div>Cobertura:</div><strong>100%</strong></div>
+                <div class="info-item"><div>Intervalo:</div><strong>60 s</strong></div>
+                <div class="info-item"><div>ID del Sensor:</div><strong><span id="sensorId">#6725</span></strong></div>
+                <div class="info-item"><div>Tipo de Sensor:</div><strong>REST (personalizado) v2</strong></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px;">
+                <div class="card">
+                    <h3><span id="gaugeTitle">Ambiente</span></h3>
+                    <div class="gauge-wrapper">
+                        <div class="gauge-container">
+                            <div class="gauge-bg" id="gaugeBg"></div>
+                            <div class="gauge-inner"></div>
+                            <div class="needle" id="needle"></div>
+                            <div class="needle-pivot"></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; width:260px; font-size:11px; color:#666; margin-top:5px;">
+                            <span id="gaugeMinLbl">0.0 °C</span>
+                            <span id="gaugeMaxLbl">31.0 °C</span>
+                        </div>
+                        <div class="gauge-reading" id="gaugeValueDisplay">25.3 °C</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Últimos Eventos de la Farmacia</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Hora</th><th>Sensor</th><th>Nivel</th><th>Mensaje de Evento</th></tr>
+                        </thead>
+                        <tbody id="miniLogTable">
+                            <!-- JS Inject -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. DATOS EN VIVO -->
+        <div id="tab-vivo" class="tab-content">
+            <div class="card">
+                <h3>Transmisión en Tiempo Real - <span class="active-sensor-name">TEMP AMBIENTE</span></h3>
+                <canvas id="chartLive" style="max-height: 320px;"></canvas>
+            </div>
+        </div>
+
+        <!-- 3. 24 HORAS -->
+        <div id="tab-24h" class="tab-content">
+            <div class="card">
+                <h3>Comportamiento de las Últimas 24 Horas - <span class="active-sensor-name">TEMP AMBIENTE</span></h3>
+                <canvas id="chart24h" style="max-height: 320px;"></canvas>
+            </div>
+        </div>
+
+        <!-- 4. 10 DÍAS -->
+        <div id="tab-10d" class="tab-content">
+            <div class="card">
+                <h3>Histórico Promedio - Últimos 10 Días</h3>
+                <canvas id="chart10d" style="max-height: 320px;"></canvas>
+            </div>
+        </div>
+
+        <!-- 5. 365 DÍAS -->
+        <div id="tab-365d" class="tab-content">
+            <div class="card">
+                <h3>Tendencia Anual de la Variable</h3>
+                <canvas id="chart365d" style="max-height: 320px;"></canvas>
+            </div>
+        </div>
+
+        <!-- 6. DATOS HISTÓRICOS -->
+        <div id="tab-historico" class="tab-content">
+            <div class="card">
+                <h3>Tabla de Registros Almacenados <button class="btn" style="float:right;" onclick="exportarCSV()">📥 Exportar CSV</button></h3>
+                <table style="margin-top:10px;">
+                    <thead>
+                        <tr><th>Fecha / Hora</th><th>Sensor</th><th>Valor Registrado</th><th>Estado</th></tr>
+                    </thead>
+                    <tbody id="tableHistorical">
+                        <!-- JS Inject -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 7. LOG -->
+        <div id="tab-log" class="tab-content">
+            <div class="card">
+                <h3>Auditoría Completa de Logs del Sistema PRTG</h3>
+                <table>
+                    <thead>
+                        <tr><th>Marca de Tiempo</th><th>Sensor</th><th>Tipo</th><th>Descripción del Evento</th></tr>
+                    </thead>
+                    <tbody id="fullLogTable">
+                        <!-- JS Inject -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 8. CONFIGURACIÓN -->
+        <div id="tab-config" class="tab-content">
+            <div class="card">
+                <h3>Parámetros de Configuración - <span class="active-sensor-name">TEMP AMBIENTE</span></h3>
+                <div class="form-group">
+                    <label>Nombre del Sensor:</label>
+                    <input type="text" id="cfgName" value="TEMP AMBIENTE">
+                </div>
+                <div class="form-group">
+                    <label>Límite Superior de Advertencia:</label>
+                    <input type="number" id="cfgWarn" value="25.0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Límite Superior Crítico:</label>
+                    <input type="number" id="cfgCrit" value="28.0" step="0.1">
+                </div>
+                <button class="btn" onclick="guardarConfiguracion()">💾 Guardar Configuración</button>
+            </div>
+        </div>
+
+        <!-- CONSOLA MULTISENSOR DEL INSTRUCTOR -->
+        <div class="instructor-panel">
+            <h4>🕹️ Consola de Simulación Multisensor (Instructor SENA)</h4>
+            <p style="font-size:12px; color:#94a3b8; margin-bottom:12px;">Modifica cualquiera de los 4 sensores de la Farmacia en tiempo real para evaluar el aprendizaje de los aprendices:</p>
+            
+            <div class="sensor-control-grid">
+                <!-- Control Energía -->
+                <div class="sensor-card-ctrl">
+                    <h5><span>⚡ Energía Red</span> <span id="ctrl-val-energia" style="color:#10b981;">115 V</span></h5>
+                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('energia', 0, 'OK')">Normal (115V)</button>
+                    <button class="btn-sim" style="background:#f59e0b;" onclick="modificarSensor('energia', -25, 'WARNING')">Bajo Voltaje</button>
+                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('energia', -115, 'CRITICAL')">Corte Energía</button>
+                </div>
+
+                <!-- Control Nevera 1 -->
+                <div class="sensor-card-ctrl">
+                    <h5><span>❄️ Nevera 1</span> <span id="ctrl-val-nevera1" style="color:#10b981;">4.2 °C</span></h5>
+                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('nevera1', 4.2, 'OK')">Óptimo (4.2°C)</button>
+                    <button class="btn-sim" style="background:#f59e0b;" onclick="modificarSensor('nevera1', 9.5, 'WARNING')">Elevada (9.5°C)</button>
+                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('nevera1', 14.0, 'CRITICAL')">Crítica (14°C)</button>
+                </div>
+
+                <!-- Control Temp Ambiente -->
+                <div class="sensor-card-ctrl">
+                    <h5><span>🌡️ TEMP AMBIENTE</span> <span id="ctrl-val-temp_ambiente" style="color:#f59e0b;">25.3 °C</span></h5>
+                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('temp_ambiente', 22.0, 'OK')">Normal (22°C)</button>
+                    <button class="btn-sim" style="background:#f59e0b;" onclick="modificarSensor('temp_ambiente', 25.3, 'WARNING')">Advertencia</button>
+                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('temp_ambiente', 29.5, 'CRITICAL')">Crítica (29.5°C)</button>
+                </div>
+
+                <!-- Control Humedad -->
+                <div class="sensor-card-ctrl">
+                    <h5><span>💧 HUMEDAD</span> <span id="ctrl-val-humedad" style="color:#ef4444;">78.5 %</span></h5>
+                    <button class="btn-sim" style="background:#10b981;" onclick="modificarSensor('humedad', 55.0, 'OK')">Óptima (55%)</button>
+                    <button class="btn-sim" style="background:#f59e0b;" onclick="modificarSensor('humedad', 68.0, 'WARNING')">Alta (68%)</button>
+                    <button class="btn-sim" style="background:#ef4444;" onclick="modificarSensor('humedad', 78.5, 'CRITICAL')">Excesiva (78.5%)</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // BASE DE DATOS MULTISENSOR
+        const sensors = {
+            energia: {
+                id: "#6722",
+                name: "Energía",
+                gaugeTitle: "Voltaje Red Eléctrica",
+                unit: "V",
+                value: 115.0,
+                min: 0,
+                max: 240,
+                warnThreshold: 90.0,
+                critThreshold: 50.0,
+                status: "OK", // OK, WARNING, CRITICAL
+                icon: "✓",
+                color: "#10b981",
+                bannerMsg: "Energía en rango nominal (115 V) - Suministro eléctrico estable.",
+                lastFail: "120 d",
+                liveData: [115, 114, 115, 116, 115, 115, 114, 115]
+            },
+            nevera1: {
+                id: "#6723",
+                name: "Nevera 1",
+                gaugeTitle: "Temperatura Refrigeración Medicamentos",
+                unit: "°C",
+                value: 4.2,
+                min: -5.0,
+                max: 15.0,
+                warnThreshold: 8.0,
+                critThreshold: 12.0,
+                status: "OK",
+                icon: "✓",
+                color: "#10b981",
+                bannerMsg: "Cadena de frío conservada (4.2 °C) - Rango normativo: 2.0 °C a 8.0 °C.",
+                lastFail: "45 d",
+                liveData: [4.1, 4.2, 4.3, 4.2, 4.1, 4.2, 4.3, 4.2]
+            },
+            temp_ambiente: {
+                id: "#6725",
+                name: "TEMP AMBIENTE",
+                gaugeTitle: "Ambiente",
+                unit: "°C",
+                value: 25.3,
+                min: 0.0,
+                max: 31.0,
+                warnThreshold: 25.0,
+                critThreshold: 28.0,
+                status: "WARNING",
+                icon: "W",
+                color: "#f59e0b",
+                bannerMsg: "25.3 °C (Ambiente) está por encima del límite de advertencia 25.0 °C en Ambiente. ADVERTENCIA TEMPERATURA.",
+                lastFail: "72 d",
+                liveData: [24.8, 25.0, 25.1, 25.2, 25.3, 25.3, 25.4, 25.3]
+            },
+            humedad: {
+                id: "#6726",
+                name: "HUMEDAD",
+                gaugeTitle: "Humedad Relativa Ambiente",
+                unit: "%",
+                value: 78.5,
+                min: 0.0,
+                max: 100.0,
+                warnThreshold: 65.0,
+                critThreshold: 75.0,
+                status: "CRITICAL",
+                icon: "!",
+                color: "#ef4444",
+                bannerMsg: "78.5 % (Humedad) está por encima del LÍMITE CRÍTICO de 75.0 % en Farmacia. ¡ALERTA HUMEDAD ELEVADA!",
+                lastFail: "0 d",
+                liveData: [70, 72, 74, 76, 77, 78, 78.5, 78.5]
+            }
+        };
+
+        let currentSensorKey = "temp_ambiente";
+        let logs = [];
+        let historicalData = [];
+        let liveLabels = ['09:10', '09:11', '09:12', '09:13', '09:14', '09:15', '09:16', '09:17'];
+
+        // OBJETOS DE GRÁFICAS
+        let chartLiveInst, chart24hInst, chart10dInst, chart365dInst;
+
+        // DROPDOWN
+        function toggleDropdown() {
+            document.getElementById('sensorDropdown').classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.sensor-select-btn') && !event.target.matches('.sensor-select-btn *')) {
+                const dropdowns = document.getElementsByClassName("dropdown-menu");
+                for (let i = 0; i < dropdowns.length; i++) {
+                    dropdowns[i].classList.remove('show');
+                }
+            }
+        }
+
+        // SELECCIÓN DE SENSOR
+        function selectSensor(key) {
+            currentSensorKey = key;
+            
+            // Actualizar clase active en el dropdown
+            document.querySelectorAll('.dropdown-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            updateAllUI();
+            
+            // Destruir gráficos para recalcular
+            if(chartLiveInst) { chartLiveInst.destroy(); chartLiveInst = null; initChartLive(); }
+            if(chart24hInst) { chart24hInst.destroy(); chart24hInst = null; initChart24h(); }
+            if(chart10dInst) { chart10dInst.destroy(); chart10dInst = null; initChart10d(); }
+            if(chart365dInst) { chart365dInst.destroy(); chart365dInst = null; initChart365d(); }
+        }
+
+        // ACTUALIZACIÓN GENERAL DE LA INTERFAZ
+        function updateAllUI() {
+            const s = sensors[currentSensorKey];
+
+            // 1. Textos del sensor activo
+            document.getElementById('currentSensorName').innerText = s.name;
+            document.getElementById('titleSensorName').innerText = s.name;
+            document.querySelectorAll('.active-sensor-name').forEach(el => el.innerText = s.name);
+            document.getElementById('sensorId').innerText = s.id;
+            document.getElementById('lastFailTime').innerText = s.lastFail;
+
+            // Icono e indicador de estado
+            const iconSpan = document.getElementById('currentSensorIcon');
+            iconSpan.innerText = s.icon;
+            iconSpan.className = `status-icon icon-${s.status === 'OK' ? 'green' : (s.status === 'WARNING' ? 'yellow' : 'red')}`;
+
+            document.getElementById('titleIcon').innerText = s.icon;
+            document.getElementById('statusBadge').innerText = s.status === 'OK' ? 'OPERATIVO' : (s.status === 'WARNING' ? 'ADVERTENCIA' : 'CRÍTICO');
+
+            // Colores del banner y barra de título
+            const titleBar = document.getElementById('titleBar');
+            const alertBanner = document.getElementById('alertBanner');
+
+            if(s.status === 'OK') {
+                titleBar.style.backgroundColor = "#10b981";
+                alertBanner.style.backgroundColor = "#10b981";
+            } else if(s.status === 'WARNING') {
+                titleBar.style.backgroundColor = "#d97706";
+                alertBanner.style.backgroundColor = "#f59e0b";
+            } else {
+                titleBar.style.backgroundColor = "#dc2626";
+                alertBanner.style.backgroundColor = "#ef4444";
+            }
+
+            alertBanner.innerText = s.bannerMsg;
+
+            // 2. Dial / Manómetro (Gauge)
+            document.getElementById('gaugeTitle').innerText = s.gaugeTitle;
+            document.getElementById('gaugeMinLbl').innerText = `${s.min.toFixed(1)} ${s.unit}`;
+            document.getElementById('gaugeMaxLbl').innerText = `${s.max.toFixed(1)} ${s.unit}`;
+            document.getElementById('gaugeValueDisplay').innerText = `${s.value.toFixed(1)} ${s.unit}`;
+
+            // Rotación Aguja
+            let clampedVal = Math.max(s.min, Math.min(s.max, s.value));
+            let pct = (clampedVal - s.min) / (s.max - s.min);
+            let deg = -90 + (pct * 180);
+            document.getElementById('needle').style.transform = `rotate(${deg}deg)`;
+
+            // Config Formulario
+            document.getElementById('cfgName').value = s.name;
+            document.getElementById('cfgWarn').value = s.warnThreshold;
+            document.getElementById('cfgCrit').value = s.critThreshold;
+
+            // 3. Badges globales de estado
+            updateGlobalBadges();
+        }
+
+        function updateGlobalBadges() {
+            let redCount = 0, yellowCount = 0, greenCount = 0;
+            for(let k in sensors) {
+                if(sensors[k].status === 'CRITICAL') redCount++;
+                else if(sensors[k].status === 'WARNING') yellowCount++;
+                else greenCount++;
+
+                // Actualizar iconos en el dropdown menu
+                const dropIcon = document.getElementById(`drop-icon-${k}`);
+                if(dropIcon) {
+                    dropIcon.innerText = sensors[k].icon;
+                    dropIcon.className = `status-icon icon-${sensors[k].status === 'OK' ? 'green' : (sensors[k].status === 'WARNING' ? 'yellow' : 'red')}`;
+                }
+
+                // Actualizar valores en panel instructor
+                const ctrlVal = document.getElementById(`ctrl-val-${k}`);
+                if(ctrlVal) {
+                    ctrlVal.innerText = `${sensors[k].value.toFixed(1)} ${sensors[k].unit}`;
+                    ctrlVal.style.color = sensors[k].status === 'OK' ? '#10b981' : (sensors[k].status === 'WARNING' ? '#f59e0b' : '#ef4444');
+                }
+            }
+
+            document.getElementById('globalBadgeRed').innerText = `! ${redCount}`;
+            document.getElementById('globalBadgeYellow').innerText = `W ${yellowCount}`;
+            document.getElementById('globalBadgeGreen').innerText = `✓ ${greenCount}`;
+        }
+
+        // MODIFICACIÓN DE SENSORES DESDE EL PANEL
+        function modificarSensor(key, nuevoValor, nuevoEstado) {
+            let s = sensors[key];
+            
+            if(key === 'energia' && nuevoEstado === 'WARNING') s.value = 95.0;
+            else if(key === 'energia' && nuevoEstado === 'CRITICAL') s.value = 0.0;
+            else s.value = nuevoValor;
+
+            s.status = nuevoEstado;
+            s.icon = nuevoEstado === 'OK' ? '✓' : (nuevoEstado === 'WARNING' ? 'W' : '!');
+
+            // Mensajes adaptativos
+            if(nuevoEstado === 'OK') s.bannerMsg = `${s.name} operando en parámetros normales (${s.value.toFixed(1)} ${s.unit}).`;
+            else if(nuevoEstado === 'WARNING') s.bannerMsg = `${s.name} (${s.value.toFixed(1)} ${s.unit}) ha superado el límite de advertencia.`;
+            else s.bannerMsg = `¡ALERTA CRÍTICA! ${s.name} registra valores fuera de rango permitido (${s.value.toFixed(1)} ${s.unit}).`;
+
+            addLog(s.name, nuevoEstado, s.bannerMsg);
+            
+            if(currentSensorKey === key) updateAllUI();
+            else updateGlobalBadges();
+
+            if(chartLiveInst && currentSensorKey === key) {
+                chartLiveInst.data.datasets[0].data.push(s.value);
+                chartLiveInst.data.datasets[0].data.shift();
+                chartLiveInst.update();
+            }
+        }
+
+        // AGREGAR EVENTOS DE LOG
+        function addLog(sensorName, level, message) {
+            const timeStr = new Date().toLocaleTimeString();
+            const dateStr = new Date().toLocaleDateString();
+            
+            logs.unshift({ time: `${dateStr} ${timeStr}`, sensor: sensorName, level, message });
+            historicalData.unshift({ time: `${dateStr} ${timeStr}`, sensor: sensorName, value: `${sensors[currentSensorKey].value.toFixed(1)} ${sensors[currentSensorKey].unit}`, status: level });
+
+            if(logs.length > 50) logs.pop();
+            if(historicalData.length > 50) historicalData.pop();
+
+            renderLogs();
+        }
+
+        function renderLogs() {
+            document.getElementById('miniLogTable').innerHTML = logs.slice(0, 5).map(l => `
+                <tr><td>${l.time.split(' ')[1]}</td><td><b>${l.sensor}</b></td><td><span class="status-icon icon-${l.level === 'OK' ? 'green' : (l.level === 'WARNING' ? 'yellow' : 'red')}">${l.level === 'OK' ? '✓' : (l.level === 'WARNING' ? 'W' : '!')}</span></td><td>${l.message}</td></tr>
+            `).join('');
+
+            document.getElementById('fullLogTable').innerHTML = logs.map(l => `
+                <tr><td>${l.time}</td><td><b>${l.sensor}</b></td><td><b>${l.level}</b></td><td>${l.message}</td></tr>
+            `).join('');
+
+            document.getElementById('tableHistorical').innerHTML = historicalData.map(h => `
+                <tr><td>${h.time}</td><td>${h.sensor}</td><td><b>${h.value}</b></td><td>${h.status}</td></tr>
+            `).join('');
+        }
+
+        // PESTAÑAS
+        function switchTab(tabId, tabEl) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            tabEl.classList.add('active');
+
+            if(tabId === 'tab-vivo') initChartLive();
+            if(tabId === 'tab-24h') initChart24h();
+            if(tabId === 'tab-10d') initChart10d();
+            if(tabId === 'tab-365d') initChart365d();
+        }
+
+        // CONFIGURACIÓN
+        function guardarConfiguracion() {
+            let s = sensors[currentSensorKey];
+            s.name = document.getElementById('cfgName').value;
+            s.warnThreshold = parseFloat(document.getElementById('cfgWarn').value);
+            s.critThreshold = parseFloat(document.getElementById('cfgCrit').value);
+
+            addLog(s.name, "INFO", "Configuración de parámetros actualizada.");
+            alert("Parámetros guardados con éxito.");
+            updateAllUI();
+        }
+
+        // EXPORTAR CSV
+        function exportarCSV() {
+            let csv = "Fecha,Sensor,Valor,Estado\n";
+            historicalData.forEach(r => {
+                csv += `"${r.time}","${r.sensor}","${r.value}","${r.status}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `reporte_${currentSensorKey}_PRTG.csv`);
+            a.click();
+        }
+
+        // INICIALIZACIÓN DE GRÁFICAS ADAPTATIVAS
+        function initChartLive() {
+            if(chartLiveInst) return;
+            const s = sensors[currentSensorKey];
+            const ctx = document.getElementById('chartLive').getContext('2d');
+            chartLiveInst = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: liveLabels,
+                    datasets: [{ label: `${s.name} (${s.unit})`, data: s.liveData, borderColor: s.color, backgroundColor: 'rgba(2,132,199,0.1)', fill: true, tension: 0.3 }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        function initChart24h() {
+            if(chart24hInst) return;
+            const s = sensors[currentSensorKey];
+            const hours = Array.from({length: 24}, (_, i) => `${i}:00`);
+            const mockData = hours.map((_, i) => (s.value + (Math.sin(i / 2) * (s.max - s.min) * 0.05)).toFixed(1));
+            
+            const ctx = document.getElementById('chart24h').getContext('2d');
+            chart24hInst = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: hours,
+                    datasets: [{ label: `Lectura 24h - ${s.name} (${s.unit})`, data: mockData, borderColor: '#f59e0b', fill: false }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        function initChart10d() {
+            if(chart10dInst) return;
+            const s = sensors[currentSensorKey];
+            const days = ['Día 1', 'Día 2', 'Día 3', 'Día 4', 'Día 5', 'Día 6', 'Día 7', 'Día 8', 'Día 9', 'Día 10'];
+            const mockData = days.map(() => (s.value + (Math.random() - 0.5) * 2).toFixed(1));
+
+            const ctx = document.getElementById('chart10d').getContext('2d');
+            chart10dInst = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: days,
+                    datasets: [{ label: `Promedio 10 Días (${s.unit})`, data: mockData, backgroundColor: '#3b82f6' }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        function initChart365d() {
+            if(chart365dInst) return;
+            const s = sensors[currentSensorKey];
+            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const mockData = months.map(() => (s.value + (Math.random() - 0.5) * 3).toFixed(1));
+
+            const ctx = document.getElementById('chart365d').getContext('2d');
+            chart365dInst = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{ label: `Consolidado Anual (${s.unit})`, data: mockData, borderColor: '#10b981', tension: 0.2 }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        // INICIALIZACIÓN DEL SISTEMA
+        addLog("SISTEMA", "OK", "Servidor de Monitoreo PRTG iniciado correctamente.");
+        addLog("HUMEDAD", "CRITICAL", "78.5 % superó el límite máximo seguro (75.0 %).");
+        addLog("TEMP AMBIENTE", "WARNING", "25.3 °C superó el límite de advertencia (25.0 °C).");
+        addLog("Nevera 1", "OK", "Temperatura de cadena de frío estable (4.2 °C).");
+        addLog("Energía", "OK", "Red eléctrica con voltaje nominal (115 V).");
+
+        updateAllUI();
+    </script>
+</body>
+</html>
